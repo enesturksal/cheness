@@ -47,7 +47,7 @@ async function clickSquare(page, file, rank) {
 
 // ---- Phone viewport, mouse input ----
 const page = await newPage({ width: 390, height: 844 }, { deviceScaleFactor: 2 });
-await page.goto(URL, { waitUntil: 'networkidle' });
+await page.goto(URL, { waitUntil: 'load' });
 await page.waitForSelector('text=/Arkadaşınla oyna|Play with a friend/', { timeout: 30000 });
 await shot(page, '00-home');
 await startButton(page).click();
@@ -225,7 +225,7 @@ const touch = await newPage(
   { width: 390, height: 844 },
   { deviceScaleFactor: 2, isMobile: true, hasTouch: true },
 );
-await touch.goto(URL, { waitUntil: 'networkidle' });
+await touch.goto(URL, { waitUntil: 'load' });
 await touch.waitForSelector('text=/Arkadaşınla oyna|Play with a friend/');
 await touch
   .getByRole('button', { name: /^(Başla|Start)$/ })
@@ -246,7 +246,7 @@ await shot(touch, '10-pass-and-play');
 
 // ---- Desktop layout ----
 const desk = await newPage({ width: 1280, height: 800 });
-await desk.goto(URL, { waitUntil: 'networkidle' });
+await desk.goto(URL, { waitUntil: 'load' });
 await desk.waitForSelector('text=/Arkadaşınla oyna|Play with a friend/');
 await shot(desk, '11-desktop-home');
 await startButton(desk).click();
