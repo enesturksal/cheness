@@ -18,6 +18,7 @@ export function StatusBar() {
   const t = useT();
   const game = useStore((s) => s.game);
   const annotations = useStore((s) => s.annotations);
+  const meta = useStore((s) => s.meta);
   const analysisDepth = useStore((s) => s.analysisDepth);
   const botThinking = useStore((s) => s.botThinking);
   const engineStatus = useStore((s) => s.engineStatus);
@@ -89,6 +90,12 @@ export function StatusBar() {
               </span>
             )}
           </div>
+          {meta && (meta.white || meta.black) && (
+            <div className="truncate text-[11px] text-muted">
+              {meta.white ?? '?'} – {meta.black ?? '?'}
+              {meta.result && meta.result !== '*' ? ` · ${meta.result}` : ''}
+            </div>
+          )}
           {game.ply > 0 && (
             <div className="truncate font-mono text-[11px] text-muted">{movetext(game)}</div>
           )}

@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import { TopBar } from './components/TopBar';
 import { startAnalysisController } from './engine/analysisController';
+import { startSuggestionController } from './engine/suggestionController';
 import { useBot } from './engine/useBot';
 import { startExplorerController } from './explorer/controller';
 import { completeLoginFromUrl, fetchUsername } from './explorer/lichessAuth';
+import { HomePage } from './pages/HomePage';
 import { LibraryPage } from './pages/LibraryPage';
+import { OpeningsPage } from './pages/OpeningsPage';
 import { PlayPage } from './pages/PlayPage';
 import { useStore } from './store/useStore';
 
@@ -23,6 +26,7 @@ export default function App() {
 
   useEffect(() => startExplorerController(), []);
   useEffect(() => startAnalysisController(), []);
+  useEffect(() => startSuggestionController(), []);
 
   // Finish a "Login with Lichess" round-trip, and backfill the username for pasted tokens.
   useEffect(() => {
@@ -42,7 +46,10 @@ export default function App() {
     <div className="flex h-dvh flex-col">
       <TopBar />
       <main className="min-h-0 flex-1 overflow-y-auto">
-        {view === 'play' ? <PlayPage /> : <LibraryPage />}
+        {view === 'home' && <HomePage />}
+        {view === 'play' && <PlayPage />}
+        {view === 'library' && <LibraryPage />}
+        {view === 'openings' && <OpeningsPage />}
       </main>
     </div>
   );

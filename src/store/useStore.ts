@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import * as G from '../game/game';
-import type { AnalysisDepth, MoveAnnotation } from '../engine/analysis';
+import type { AnalysisDepth, MoveAnnotation, Score } from '../engine/analysis';
 import { DEFAULT_LEVEL, type LevelId } from '../engine/difficulty';
 import { detectLang, type Lang } from '../i18n/strings';
 import {
@@ -13,10 +13,17 @@ import {
   type Speed,
 } from '../explorer/types';
 
-export type Opponent = 'bot' | 'human';
+/**
+ * How the board is being used:
+ * - bot: you against Stockfish
+ * - friends: two people on one device (pass and play)
+ * - explore: both sides by hand with the tutor (opening study)
+ * - analysis: reviewing an imported game
+ */
+export type Mode = 'bot' | 'friends' | 'explore' | 'analysis';
 export type Theme = 'dark' | 'light';
-export type View = 'play' | 'library';
-export type PanelTab = 'opening' | 'moves' | 'settings';
+export type View = 'home' | 'play' | 'library' | 'openings';
+export type PanelTab = 'opening' | 'moves' | 'report' | 'settings';
 export type EngineStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type ExplorerStatus =
   | 'idle'
@@ -36,12 +43,38 @@ export interface ExplorerState {
   data: ExplorerResponse | null;
 }
 
+export interface Suggestion {
+  uci: string;
+  san: string;
+  /** Side-to-move perspective. */
+  score: Score;
+}
+
+export interface SuggestionState {
+  fen: string | null;
+  status: 'idle' | 'loading' | 'ok' | 'none';
+  source: 'cloud' | 'engine' | null;
+  depth: number;
+  lines: Suggestion[];
+}
+
+export interface GameMeta {
+  white?: string;
+  black?: string;
+  result?: string;
+  event?: string;
+  site?: string;
+}
+
 export interface Settings {
   playerColor: G.Color;
-  opponent: Opponent;
   level: LevelId;
   tutorEnabled: boolean;
   showOpponentHints: boolean;
+  /** Draw the top continuations (or engine suggestions) as arrows on the board. */
+  showArrows: boolean;
+  /** Pass-and-play: turn the board towards the side to move. */
+  autoFlip: boolean;
   explorerDb: ExplorerDb;
   ratings: RatingBucket[];
   speeds: Speed[];
@@ -53,18 +86,30 @@ export interface Settings {
   lichessUser: string | null;
   /** Engine depth for move classification; 0 disables it. */
   analysisDepth: AnalysisDepth;
+  /** Prefer Lichess cloud evaluations (deep Stockfish) when available. */
+  useCloudEval: boolean;
 }
 
 export interface NewGameOptions {
+  mode?: Mode;
   playerColor?: G.Color | 'random';
   startFen?: string;
-  opponent?: Opponent;
+}
+
+export interface LoadGameOptions {
+  mode: Mode;
+  playerColor?: G.Color;
+  meta?: GameMeta;
+  /** Where to place the cursor; defaults to the end of the line. */
+  ply?: number;
 }
 
 export interface StoreState extends Settings {
   game: G.GameState;
   /** Increments on every new game/line so stale async bot results can be discarded. */
   gameId: number;
+  mode: Mode;
+  meta: GameMeta | null;
   orientation: G.Color;
   takeover: boolean;
   botThinking: boolean;
@@ -74,33 +119,40 @@ export interface StoreState extends Settings {
   view: View;
   panelTab: PanelTab;
   explorer: ExplorerState;
+  suggestions: SuggestionState;
   /** Engine verdict per played move (index = ply - 1); null while pending. */
   annotations: (MoveAnnotation | null)[];
+  /** Family to open when the library is shown next (set by the Openings screen). */
+  libraryFamily: string | null;
 
   playUci: (uci: string) => boolean;
   undo: () => void;
   redo: () => void;
   goToPly: (ply: number) => void;
   newGame: (opts?: NewGameOptions) => void;
-  loadLine: (uciMoves: string[], opts?: { playerColor?: G.Color; opponent?: Opponent }) => boolean;
+  loadGame: (uciMoves: string[], opts: LoadGameOptions) => boolean;
   flipBoard: () => void;
   setPreview: (uci: string | null) => void;
   setSettings: (s: Partial<Settings>) => void;
+  setMode: (m: Mode) => void;
   setTakeover: (v: boolean) => void;
   setBotThinking: (v: boolean) => void;
   setEngineStatus: (v: EngineStatus) => void;
   setView: (v: View) => void;
+  openLibraryFamily: (family: string | null) => void;
   setPanelTab: (v: PanelTab) => void;
   setExplorer: (e: ExplorerState) => void;
+  setSuggestions: (s: SuggestionState) => void;
   setAnnotation: (index: number, a: MoveAnnotation) => void;
 }
 
 const defaultSettings: Settings = {
   playerColor: 'white',
-  opponent: 'bot',
   level: DEFAULT_LEVEL,
   tutorEnabled: true,
   showOpponentHints: false,
+  showArrows: true,
+  autoFlip: true,
   explorerDb: 'lichess',
   ratings: DEFAULT_RATINGS,
   speeds: DEFAULT_SPEEDS,
@@ -110,6 +162,15 @@ const defaultSettings: Settings = {
   lichessToken: null,
   lichessUser: null,
   analysisDepth: 10,
+  useCloudEval: true,
+};
+
+const idleSuggestions: SuggestionState = {
+  fen: null,
+  status: 'idle',
+  source: null,
+  depth: 0,
+  lines: [],
 };
 
 function pickColor(c: G.Color | 'random' | undefined, fallback: G.Color): G.Color {
@@ -123,15 +184,19 @@ export const useStore = create<StoreState>()(
       ...defaultSettings,
       game: G.newGame(),
       gameId: 0,
+      mode: 'bot',
+      meta: null,
       orientation: 'white',
       takeover: false,
       botThinking: false,
       engineStatus: 'idle',
       previewUci: null,
-      view: 'play',
+      view: 'home',
       panelTab: 'opening',
       explorer: { key: null, status: 'idle', data: null },
+      suggestions: idleSuggestions,
       annotations: [],
+      libraryFamily: null,
 
       playUci: (uci) => {
         const s = get();
@@ -147,7 +212,7 @@ export const useStore = create<StoreState>()(
           if (s.game.ply === 0) return {};
           let ply = s.game.ply - 1;
           // Against the bot, take back to the player's own turn (usually two plies).
-          const vsBot = s.opponent === 'bot' && !s.takeover;
+          const vsBot = s.mode === 'bot' && !s.takeover;
           if (vsBot && ply > 0 && G.turnOf(G.fenAt(s.game, ply)) !== s.playerColor) ply -= 1;
           return { game: { ...s.game, ply }, previewUci: null, botThinking: false };
         }),
@@ -167,38 +232,42 @@ export const useStore = create<StoreState>()(
 
       newGame: (opts) =>
         set((s) => {
+          const mode = opts?.mode ?? s.mode;
           const color = pickColor(opts?.playerColor, s.playerColor);
           return {
             game: G.newGame(opts?.startFen),
             gameId: s.gameId + 1,
+            mode,
+            meta: null,
             playerColor: color,
-            orientation: color,
-            opponent: opts?.opponent ?? s.opponent,
-            takeover: false,
-            botThinking: false,
-            previewUci: null,
-            annotations: [],
-            view: 'play',
-          };
-        }),
-
-      loadLine: (uciMoves, opts) => {
-        const game = G.gameFromUciLine(uciMoves);
-        if (!game) return false;
-        set((s) => {
-          const color = opts?.playerColor ?? s.playerColor;
-          return {
-            game,
-            gameId: s.gameId + 1,
-            playerColor: color,
-            orientation: color,
-            opponent: opts?.opponent ?? s.opponent,
+            orientation: mode === 'bot' ? color : 'white',
             takeover: false,
             botThinking: false,
             previewUci: null,
             annotations: [],
             view: 'play',
             panelTab: 'opening',
+          };
+        }),
+
+      loadGame: (uciMoves, opts) => {
+        const game = G.gameFromUciLine(uciMoves);
+        if (!game) return false;
+        set((s) => {
+          const color = opts.playerColor ?? (opts.mode === 'bot' ? s.playerColor : 'white');
+          return {
+            game: { ...game, ply: opts.ply ?? game.moves.length },
+            gameId: s.gameId + 1,
+            mode: opts.mode,
+            meta: opts.meta ?? null,
+            playerColor: color,
+            orientation: color,
+            takeover: false,
+            botThinking: false,
+            previewUci: null,
+            annotations: [],
+            view: 'play',
+            panelTab: opts.mode === 'analysis' ? 'report' : 'opening',
           };
         });
         return true;
@@ -207,12 +276,16 @@ export const useStore = create<StoreState>()(
       flipBoard: () => set((s) => ({ orientation: G.opposite(s.orientation) })),
       setPreview: (uci) => set({ previewUci: uci }),
       setSettings: (partial) => set(partial),
+      setMode: (mode) => set({ mode, takeover: false, botThinking: false }),
       setTakeover: (v) => set({ takeover: v, botThinking: v ? false : get().botThinking }),
       setBotThinking: (v) => set({ botThinking: v }),
       setEngineStatus: (v) => set({ engineStatus: v }),
       setView: (v) => set({ view: v, previewUci: null }),
+      openLibraryFamily: (family) =>
+        set({ view: 'library', libraryFamily: family, previewUci: null }),
       setPanelTab: (v) => set({ panelTab: v }),
       setExplorer: (e) => set({ explorer: e }),
+      setSuggestions: (sg) => set({ suggestions: sg }),
       setAnnotation: (index, a) =>
         set((s) => {
           if (index < 0 || index >= s.game.moves.length) return {};
@@ -224,13 +297,14 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: 'bookline',
-      version: 1,
+      version: 2,
       partialize: (s) => ({
         playerColor: s.playerColor,
-        opponent: s.opponent,
         level: s.level,
         tutorEnabled: s.tutorEnabled,
         showOpponentHints: s.showOpponentHints,
+        showArrows: s.showArrows,
+        autoFlip: s.autoFlip,
         explorerDb: s.explorerDb,
         ratings: s.ratings,
         speeds: s.speeds,
@@ -240,7 +314,10 @@ export const useStore = create<StoreState>()(
         lichessToken: s.lichessToken,
         lichessUser: s.lichessUser,
         analysisDepth: s.analysisDepth,
+        useCloudEval: s.useCloudEval,
         game: s.game,
+        mode: s.mode,
+        meta: s.meta,
         orientation: s.orientation,
       }),
     },
@@ -252,8 +329,8 @@ export const selectFen = (s: StoreState): string => G.currentFen(s.game);
 export const selectTurn = (s: StoreState): G.Color => G.turnOf(G.currentFen(s.game));
 export const selectAtTip = (s: StoreState): boolean => G.atTip(s.game);
 
-/** True when the human is expected to move in the current position (not the bot). */
+/** True when a person (not the bot) is expected to move in the current position. */
 export function humanToMove(s: StoreState): boolean {
-  if (s.opponent === 'human' || s.takeover) return true;
+  if (s.mode !== 'bot' || s.takeover) return true;
   return selectTurn(s) === s.playerColor;
 }

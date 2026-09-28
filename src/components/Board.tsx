@@ -3,10 +3,26 @@ import { Chessground } from '@lichess-org/chessground';
 import type { Api } from '@lichess-org/chessground/api';
 import type { Config } from '@lichess-org/chessground/config';
 import type { DrawShape } from '@lichess-org/chessground/draw';
+import type { DrawBrushes } from '@lichess-org/chessground/draw';
+import { defaults } from '@lichess-org/chessground/state';
 import type { Key } from '@lichess-org/chessground/types';
 import type { Square } from 'chess.js';
 import { isPromotionMove, type Color } from '../game/game';
 import { PromotionPicker } from './PromotionPicker';
+
+/**
+ * Arrow brushes: popular continuations fade with rank (most played = strongest), engine
+ * suggestions are blue, the tapped preview is yellow (chessground default).
+ */
+const BRUSHES: DrawBrushes = {
+  ...defaults().drawable.brushes,
+  pop1: { key: 'pop1', color: '#15781B', opacity: 0.95, lineWidth: 11 },
+  pop2: { key: 'pop2', color: '#15781B', opacity: 0.55, lineWidth: 9 },
+  pop3: { key: 'pop3', color: '#15781B', opacity: 0.3, lineWidth: 8 },
+  eng1: { key: 'eng1', color: '#0f5fd6', opacity: 0.9, lineWidth: 11 },
+  eng2: { key: 'eng2', color: '#0f5fd6', opacity: 0.5, lineWidth: 9 },
+  eng3: { key: 'eng3', color: '#0f5fd6', opacity: 0.28, lineWidth: 8 },
+};
 
 export interface BoardProps {
   fen: string;
@@ -73,7 +89,12 @@ export function Board(props: BoardProps) {
       highlight: { lastMove: true, check: true },
       premovable: { enabled: false },
       draggable: { enabled: true, showGhost: true },
-      drawable: { enabled: false, visible: true, autoShapes: propsRef.current.autoShapes ?? [] },
+      drawable: {
+        enabled: false,
+        visible: true,
+        autoShapes: propsRef.current.autoShapes ?? [],
+        brushes: BRUSHES,
+      },
       movable: {
         ...initial.movable,
         events: {

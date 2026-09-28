@@ -106,7 +106,7 @@ export function startExplorerController(): () => void {
       s.tutorEnabled !== prev.tutorEnabled ||
       s.showOpponentHints !== prev.showOpponentHints ||
       s.takeover !== prev.takeover ||
-      s.opponent !== prev.opponent ||
+      s.mode !== prev.mode ||
       s.playerColor !== prev.playerColor ||
       s.lichessToken !== prev.lichessToken
     ) {

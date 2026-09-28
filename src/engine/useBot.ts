@@ -14,7 +14,7 @@ const MIN_THINK_MS = 350;
 export function useBot(): void {
   const game = useStore((s) => s.game);
   const gameId = useStore((s) => s.gameId);
-  const opponent = useStore((s) => s.opponent);
+  const mode = useStore((s) => s.mode);
   const takeover = useStore((s) => s.takeover);
   const playerColor = useStore((s) => s.playerColor);
 
@@ -24,7 +24,7 @@ export function useBot(): void {
   useEffect(() => {
     const store = useStore.getState();
     const botTurn =
-      opponent === 'bot' && !takeover && tip && turnOf(fen) !== playerColor && !statusOf(fen).over;
+      mode === 'bot' && !takeover && tip && turnOf(fen) !== playerColor && !statusOf(fen).over;
     if (!botTurn) {
       if (store.botThinking) store.setBotThinking(false);
       return;
@@ -68,5 +68,5 @@ export function useBot(): void {
       cancelled = true;
       engine.stop();
     };
-  }, [fen, tip, gameId, opponent, takeover, playerColor]);
+  }, [fen, tip, gameId, mode, takeover, playerColor]);
 }

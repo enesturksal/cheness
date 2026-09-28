@@ -1,20 +1,22 @@
 import { LEVELS, type LevelId } from '../engine/difficulty';
 import { useT } from '../i18n/useT';
 import { useStore } from '../store/useStore';
-import { IconFirst, IconFlip, IconLast, IconNext, IconPlus, IconPrev } from './Icons';
+import { IconEye, IconFirst, IconFlip, IconLast, IconNext, IconPlus, IconPrev } from './Icons';
 
 export function Controls() {
   const t = useT();
   const game = useStore((s) => s.game);
+  const mode = useStore((s) => s.mode);
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
   const goToPly = useStore((s) => s.goToPly);
   const flipBoard = useStore((s) => s.flipBoard);
-  const newGame = useStore((s) => s.newGame);
+  const setView = useStore((s) => s.setView);
   const takeover = useStore((s) => s.takeover);
   const setTakeover = useStore((s) => s.setTakeover);
-  const opponent = useStore((s) => s.opponent);
   const level = useStore((s) => s.level);
+  const showArrows = useStore((s) => s.showArrows);
+  const autoFlip = useStore((s) => s.autoFlip);
   const setSettings = useStore((s) => s.setSettings);
 
   return (
@@ -61,16 +63,33 @@ export function Controls() {
           className="btn-icon"
           onClick={flipBoard}
           aria-label={t('controls.flip')}
+          disabled={mode === 'friends' && autoFlip}
         >
           <IconFlip />
         </button>
+        <button
+          type="button"
+          className={`btn-icon ${showArrows ? 'btn-primary' : ''}`}
+          aria-pressed={showArrows}
+          aria-label={t('controls.arrows')}
+          title={t('controls.arrows')}
+          onClick={() => setSettings({ showArrows: !showArrows })}
+        >
+          <IconEye off={!showArrows} />
+        </button>
         <div className="grow" />
-        <button type="button" className="btn btn-primary" onClick={() => newGame()}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setView('home')}
+          aria-label={t('controls.newGame')}
+          title={t('controls.newGame')}
+        >
           <IconPlus />
-          <span>{t('controls.newGame')}</span>
+          <span className="hidden sm:inline">{t('controls.newGame')}</span>
         </button>
       </div>
-      {opponent === 'bot' && (
+      {mode === 'bot' && (
         <div className="flex items-center gap-2">
           <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
             <input
@@ -82,7 +101,7 @@ export function Controls() {
             <span>{t('takeover.label')}</span>
           </label>
           <div className="grow" />
-          <label className="flex items-center gap-1.5 text-xs text-muted">
+          <label className="flex items-center gap-1.5 text-xs text-muted" title={t('level.hint')}>
             <span>{t('level.label')}</span>
             <select
               className="rounded-lg border border-line bg-bg2 px-2 py-1.5 text-sm text-fg"
@@ -97,6 +116,17 @@ export function Controls() {
             </select>
           </label>
         </div>
+      )}
+      {mode === 'friends' && (
+        <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
+          <input
+            type="checkbox"
+            className="size-4 accent-[var(--accent)]"
+            checked={autoFlip}
+            onChange={(e) => setSettings({ autoFlip: e.target.checked })}
+          />
+          <span>{t('settings.autoFlip')}</span>
+        </label>
       )}
     </div>
   );

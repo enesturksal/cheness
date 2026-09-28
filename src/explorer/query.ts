@@ -19,7 +19,7 @@ export function explorerQueryFor(s: StoreState): ResolvedQuery {
     speeds: s.speeds,
   };
   const turn = turnOf(currentFen(s.game));
-  const humanTurn = s.opponent === 'human' || s.takeover || turn === s.playerColor;
+  const humanTurn = s.mode !== 'bot' || s.takeover || turn === s.playerColor;
   const wanted = s.tutorEnabled && (humanTurn || s.showOpponentHints);
   return { q, key: queryKey(q), wanted };
 }

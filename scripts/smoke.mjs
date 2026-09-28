@@ -4,8 +4,9 @@
 //   npm run smoke -- http://localhost:5173/
 //
 // Needs Google Chrome installed (playwright-core uses the `chrome` channel, no browser download).
-// Exercises: moving by click and by touch, the bot reply, move analysis, the opening panel
-// (preview arrow, play from panel), undo, tabs, the library and "practice as Black".
+// Exercises: the home screen, moving by click and by touch, the bot reply, move analysis,
+// arrows, the opening panel (preview arrow, play from panel), undo, tabs, PGN import + report,
+// the Openings screen, the library and "practice as Black".
 import { mkdirSync } from 'node:fs';
 import { chromium } from 'playwright-core';
 
@@ -32,6 +33,8 @@ const fail = (msg) => {
   console.error('FAIL:', msg);
   process.exitCode = 1;
 };
+const startButton = (page) => page.getByRole('button', { name: /^(Başla|Start)$/ }).first();
+const tab = (page, re) => page.getByRole('button', { name: re }).first().click();
 
 async function clickSquare(page, file, rank) {
   const b = await page.locator('cg-board').boundingBox();
@@ -45,6 +48,9 @@ async function clickSquare(page, file, rank) {
 // ---- Phone viewport, mouse input ----
 const page = await newPage({ width: 390, height: 844 }, { deviceScaleFactor: 2 });
 await page.goto(URL, { waitUntil: 'networkidle' });
+await page.waitForSelector('text=/Arkadaşınla oyna|Play with a friend/', { timeout: 30000 });
+await shot(page, '00-home');
+await startButton(page).click();
 await page.waitForSelector('cg-board', { timeout: 30000 });
 await page.waitForTimeout(500);
 await shot(page, '01-start');
@@ -59,6 +65,8 @@ await page.waitForFunction(() => /1\. e4 [a-hNBRQKO]/.test(document.body.innerTe
   timeout: 120000,
 });
 console.log('bot reply: ok');
+await page.waitForTimeout(1500);
+console.log('arrows on board:', await page.locator('.cg-shapes g').count());
 await shot(page, '02-bot-replied');
 
 try {
@@ -66,11 +74,11 @@ try {
   await page.waitForTimeout(500);
   const line = (await page.locator('.evalbar').locator('..').innerText()).replace(/\n/g, ' ');
   console.log('analysis:', line);
-  await page.getByRole('button', { name: /^(Hamleler|Moves)$/ }).click();
+  await tab(page, /^(Hamleler|Moves)$/);
   await page.waitForTimeout(300);
   console.log('badges in move list:', await page.locator('.kind').count());
   await shot(page, '03-analysis');
-  await page.getByRole('button', { name: /^(Açılış|Opening)$/ }).click();
+  await tab(page, /^(Açılış|Opening)$/);
 } catch (e) {
   fail('move analysis did not appear: ' + e.message);
 }
@@ -93,54 +101,109 @@ if ((await rows.count()) > 0) {
 
 await page.getByRole('button', { name: /^(Geri al|Undo)$/ }).click();
 await page.waitForTimeout(300);
-await page.getByRole('button', { name: /^(Ayarlar|Settings)$/ }).click();
+await tab(page, /^(Ayarlar|Settings)$/);
 await page.waitForTimeout(200);
 await shot(page, '05-settings');
 
-await page.getByRole('button', { name: /^(Kütüphane|Library)$/ }).click();
+// ---- PGN import + report ----
+await page
+  .getByRole('button', { name: /^(Ana sayfa|Home)$/ })
+  .first()
+  .click();
+await page.waitForSelector('textarea');
+await page
+  .locator('textarea')
+  .fill(
+    '1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7 Kxf7 7. Qf3+ Ke6 8. Nc3 Nb4',
+  );
+await page.getByRole('button', { name: /Oyunu analiz et|Analyse game/ }).click();
+await page.waitForSelector('text=/Doğruluk|Accuracy/', { timeout: 15000 });
+try {
+  await page.waitForFunction(
+    () => /\d+(\.\d+)?%\s*(Doğruluk|Accuracy)/.test(document.body.innerText),
+    {
+      timeout: 120000,
+    },
+  );
+  console.log('report accuracy: ok');
+} catch {
+  fail('report accuracy did not appear');
+}
+await shot(page, '06-report');
+
+// ---- Openings screen ----
+await page
+  .getByRole('button', { name: /^(Ana sayfa|Home)$/ })
+  .first()
+  .click();
+await page
+  .getByRole('button', { name: /^(Açılışlar|Openings)/ })
+  .first()
+  .click();
+await page.waitForSelector('text=Italian Game');
+await page.getByRole('button', { name: /^(Siyah için|For Black)$/ }).click();
+await page.waitForSelector('text=Sicilian Defense');
+await shot(page, '07-openings');
+
+// ---- Library ----
+await page
+  .getByRole('button', { name: /^(Ana sayfa|Home)$/ })
+  .first()
+  .click();
+await page
+  .getByRole('button', { name: /^(Kütüphane|Library)/ })
+  .first()
+  .click();
 await page.waitForSelector('text=/Kanat açılışları|Flank openings/');
 await page.getByText(/Yarı açık oyunlar|Semi-open games/).click();
 await page.getByText('Sicilian Defense', { exact: true }).first().click();
 await page.waitForSelector('text=/Najdorf/');
-await shot(page, '06-sicilian-family');
 await page
   .getByText(/^Najdorf Variation$/)
   .first()
   .click();
 await page.waitForSelector('cg-board');
 await page.waitForTimeout(400);
-await shot(page, '07-entry-detail');
+await shot(page, '08-entry-detail');
 await page.getByRole('button', { name: /Siyah ile çalış|Practice as Black/ }).click();
 await page.waitForSelector('cg-board');
 await page.waitForTimeout(3000);
 console.log('practice as black:', (await text(page)).includes('Najdorf') ? 'ok' : 'FAILED');
-await shot(page, '08-practice-black');
+await shot(page, '09-practice-black');
 
-// ---- Touch input ----
+// ---- Touch input, pass-and-play ----
 const touch = await newPage(
   { width: 390, height: 844 },
   { deviceScaleFactor: 2, isMobile: true, hasTouch: true },
 );
 await touch.goto(URL, { waitUntil: 'networkidle' });
+await touch.waitForSelector('text=/Arkadaşınla oyna|Play with a friend/');
+await touch
+  .getByRole('button', { name: /^(Başla|Start)$/ })
+  .nth(1)
+  .click();
 await touch.waitForSelector('cg-board', { timeout: 30000 });
-await touch.getByRole('button', { name: /^(Yeni oyun|New game)$/ }).click();
 await touch.waitForTimeout(300);
 const tb = await touch.locator('cg-board').boundingBox();
 const tsq = tb.width / 8;
 await touch.touchscreen.tap(tb.x + 3.5 * tsq, tb.y + 6.5 * tsq); // d2
 await touch.waitForTimeout(150);
 await touch.touchscreen.tap(tb.x + 3.5 * tsq, tb.y + 4.5 * tsq); // d4
-await touch.waitForTimeout(500);
+await touch.waitForTimeout(600);
 const touched = (await text(touch)).includes('1. d4');
-console.log('touch move:', touched ? 'ok' : 'FAILED');
+console.log('touch move (pass and play):', touched ? 'ok' : 'FAILED');
 if (!touched) fail('touch tap did not move');
+await shot(touch, '10-pass-and-play');
 
 // ---- Desktop layout ----
 const desk = await newPage({ width: 1280, height: 800 });
 await desk.goto(URL, { waitUntil: 'networkidle' });
+await desk.waitForSelector('text=/Arkadaşınla oyna|Play with a friend/');
+await shot(desk, '11-desktop-home');
+await startButton(desk).click();
 await desk.waitForSelector('cg-board', { timeout: 30000 });
 await desk.waitForTimeout(1000);
-await shot(desk, '09-desktop');
+await shot(desk, '12-desktop-play');
 
 if (errors.length) {
   console.log('console errors/warnings:\n' + errors.join('\n'));

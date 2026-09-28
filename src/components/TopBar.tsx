@@ -1,33 +1,55 @@
+import type { StringKey } from '../i18n/strings';
 import { useT } from '../i18n/useT';
-import { useStore } from '../store/useStore';
-import { IconMoon, IconSun } from './Icons';
+import { useStore, type Mode } from '../store/useStore';
+import { IconHome, IconMoon, IconSun } from './Icons';
+
+const MODE_KEY: Record<Mode, StringKey> = {
+  bot: 'mode.bot',
+  friends: 'mode.friends',
+  explore: 'mode.explore',
+  analysis: 'mode.analysis',
+};
 
 export function TopBar() {
   const t = useT();
   const view = useStore((s) => s.view);
+  const mode = useStore((s) => s.mode);
   const setView = useStore((s) => s.setView);
   const theme = useStore((s) => s.theme);
   const setSettings = useStore((s) => s.setSettings);
 
+  const title =
+    view === 'play'
+      ? t(MODE_KEY[mode])
+      : view === 'library'
+        ? t('nav.library')
+        : view === 'openings'
+          ? t('nav.openings')
+          : null;
+
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-3 py-2">
-        <div className="flex items-center gap-2">
-          <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="size-6 rounded" />
-          <span className="text-base font-bold tracking-tight">{t('appName')}</span>
-        </div>
-        <nav className="seg ml-2">
-          <button type="button" aria-pressed={view === 'play'} onClick={() => setView('play')}>
-            {t('nav.play')}
-          </button>
+      <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2">
+        {view !== 'home' && (
           <button
             type="button"
-            aria-pressed={view === 'library'}
-            onClick={() => setView('library')}
+            className="btn-icon"
+            aria-label={t('nav.home')}
+            onClick={() => setView('home')}
           >
-            {t('nav.library')}
+            <IconHome />
           </button>
-        </nav>
+        )}
+        <button
+          type="button"
+          className="flex items-center gap-2"
+          onClick={() => setView('home')}
+          aria-label={t('nav.home')}
+        >
+          <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="size-6 rounded" />
+          <span className="text-base font-bold tracking-tight">{t('appName')}</span>
+        </button>
+        {title && <span className="chip ml-1 text-muted">{title}</span>}
         <div className="grow" />
         <button
           type="button"

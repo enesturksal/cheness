@@ -6,7 +6,7 @@ import { fetchUsername, looksLikeToken, revokeToken, startLogin } from '../explo
 import { ALL_SPEEDS, RATING_BUCKETS, type RatingBucket, type Speed } from '../explorer/types';
 import { LANGS, type Lang, type StringKey } from '../i18n/strings';
 import { useT } from '../i18n/useT';
-import { useStore } from '../store/useStore';
+import { useStore, type Mode } from '../store/useStore';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -127,6 +127,13 @@ const SPEED_LABEL: Record<Speed, string> = {
   correspondence: 'Corr.',
 };
 
+const MODES: { mode: Mode; key: StringKey }[] = [
+  { mode: 'bot', key: 'mode.bot' },
+  { mode: 'explore', key: 'mode.explore' },
+  { mode: 'friends', key: 'mode.friends' },
+  { mode: 'analysis', key: 'mode.analysis' },
+];
+
 export function SettingsPanel() {
   const t = useT();
   const s = useStore();
@@ -140,21 +147,17 @@ export function SettingsPanel() {
   return (
     <div className="flex flex-col gap-5 p-3">
       <Section title={t('opponent.label')}>
-        <div className="seg">
-          <button
-            type="button"
-            aria-pressed={s.opponent === 'bot'}
-            onClick={() => set({ opponent: 'bot' })}
-          >
-            {t('opponent.bot')}
-          </button>
-          <button
-            type="button"
-            aria-pressed={s.opponent === 'human'}
-            onClick={() => set({ opponent: 'human' })}
-          >
-            {t('opponent.human')}
-          </button>
+        <div className="flex flex-wrap gap-1.5">
+          {MODES.map((m) => (
+            <button
+              key={m.mode}
+              type="button"
+              className={`chip ${s.mode === m.mode ? 'chip-on' : ''}`}
+              onClick={() => s.setMode(m.mode)}
+            >
+              {t(m.key)}
+            </button>
+          ))}
         </div>
       </Section>
 
@@ -163,23 +166,16 @@ export function SettingsPanel() {
           <button
             type="button"
             aria-pressed={s.playerColor === 'white'}
-            onClick={() => set({ playerColor: 'white' })}
+            onClick={() => useStore.setState({ playerColor: 'white', orientation: 'white' })}
           >
             {t('side.white')}
           </button>
           <button
             type="button"
             aria-pressed={s.playerColor === 'black'}
-            onClick={() => set({ playerColor: 'black' })}
+            onClick={() => useStore.setState({ playerColor: 'black', orientation: 'black' })}
           >
             {t('side.black')}
-          </button>
-          <button
-            type="button"
-            aria-pressed={false}
-            onClick={() => s.newGame({ playerColor: 'random' })}
-          >
-            {t('side.random')}
           </button>
         </div>
       </Section>
@@ -197,6 +193,7 @@ export function SettingsPanel() {
             </button>
           ))}
         </div>
+        <p className="text-xs text-muted">{t('level.hint')}</p>
       </Section>
 
       <Section title={t('tutor.label')}>
@@ -204,6 +201,11 @@ export function SettingsPanel() {
           label={t('tutor.label')}
           checked={s.tutorEnabled}
           onChange={(v) => set({ tutorEnabled: v })}
+        />
+        <Toggle
+          label={t('controls.arrows')}
+          checked={s.showArrows}
+          onChange={(v) => set({ showArrows: v })}
         />
         <Toggle
           label={t('tutor.opponentHints')}
@@ -215,6 +217,11 @@ export function SettingsPanel() {
           hint={t('takeover.hint')}
           checked={s.takeover}
           onChange={(v) => s.setTakeover(v)}
+        />
+        <Toggle
+          label={t('settings.autoFlip')}
+          checked={s.autoFlip}
+          onChange={(v) => set({ autoFlip: v })}
         />
         <Toggle
           label={t('settings.autoQueen')}
@@ -236,6 +243,11 @@ export function SettingsPanel() {
             </button>
           ))}
         </div>
+        <Toggle
+          label={t('settings.cloudEval')}
+          checked={s.useCloudEval}
+          onChange={(v) => set({ useCloudEval: v })}
+        />
         <p className="text-xs text-muted">{t('analysis.hint')}</p>
       </Section>
 
@@ -311,7 +323,8 @@ export function SettingsPanel() {
         <p className="text-xs leading-relaxed text-muted">
           BookLine · Stockfish 19 (lite, single-thread WASM, GPL-3.0) · chessground (GPL-3.0) ·
           chess.js (BSD-2) · Opening names: lichess-org/chess-openings (CC0, {bookMeta().count}{' '}
-          {t('library.openings')}, {bookMeta().generatedAt}) · Statistics: Lichess Opening Explorer.
+          {t('library.openings')}, {bookMeta().generatedAt}) · Statistics: Lichess Opening Explorer
+          · Deep evaluations: Lichess cloud eval.
         </p>
       </Section>
     </div>

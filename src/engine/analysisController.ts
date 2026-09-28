@@ -2,6 +2,7 @@ import { lookupEpd } from '../explorer/book';
 import { fenAt, sanFromUci, statusOf } from '../game/game';
 import { useStore } from '../store/useStore';
 import { classify, negateScore, type MoveAnnotation, type Score } from './analysis';
+import { fetchCloudEval } from './cloudEval';
 import { getAnalysisEngine } from './engineManager';
 
 const DEBOUNCE_MS = 300;
@@ -13,7 +14,7 @@ interface PositionEval {
   depth: number;
 }
 
-/** Evaluations keyed by `fen|depth`; a position is analysed once and reused for both plies it touches. */
+/** Local evaluations keyed by `fen|depth`; a position is analysed once and reused for both plies it touches. */
 const evalCache = new Map<string, PositionEval>();
 
 function remember(key: string, value: PositionEval): void {
@@ -24,7 +25,7 @@ function remember(key: string, value: PositionEval): void {
   evalCache.set(key, value);
 }
 
-async function evaluatePosition(fen: string, depth: number): Promise<PositionEval> {
+async function evaluateLocal(fen: string, depth: number): Promise<PositionEval> {
   const key = `${fen}|${depth}`;
   const hit = evalCache.get(key);
   if (hit) return hit;
@@ -37,6 +38,36 @@ async function evaluatePosition(fen: string, depth: number): Promise<PositionEva
   // A search that was stopped early must not be cached as if it reached the target depth.
   if (result.depth >= depth || result.lines.length === 0) remember(key, result);
   return result;
+}
+
+async function evaluateCloud(fen: string): Promise<PositionEval | null> {
+  if (statusOf(fen).over) return { lines: [], bestmove: null, depth: 0 };
+  const c = await fetchCloudEval(fen, 2);
+  if (!c || c.lines.length === 0) return null;
+  return {
+    lines: c.lines.map((l) => ({ uci: l.uci, score: l.score })),
+    bestmove: c.lines[0].uci,
+    depth: c.depth,
+  };
+}
+
+/**
+ * Evaluate the positions before and after a move with a single source, so the two scores are
+ * comparable: Lichess cloud evals for both when both exist, otherwise the local engine for both.
+ */
+async function evaluatePair(
+  beforeFen: string,
+  afterFen: string,
+  depth: number,
+  useCloud: boolean,
+): Promise<{ before: PositionEval; after: PositionEval; source: 'cloud' | 'engine' }> {
+  if (useCloud) {
+    const [cb, ca] = await Promise.all([evaluateCloud(beforeFen), evaluateCloud(afterFen)]);
+    if (cb && ca) return { before: cb, after: ca, source: 'cloud' };
+  }
+  const before = await evaluateLocal(beforeFen, depth);
+  const after = await evaluateLocal(afterFen, depth);
+  return { before, after, source: 'engine' };
 }
 
 /** Score of the position after a move, from the mover's perspective. */
@@ -72,7 +103,7 @@ export function startAnalysisController(): () => void {
     for (const i of order) {
       if (i < 0 || i >= moves.length) continue;
       const a = s.annotations[i];
-      if (!a || a.uci !== moves[i].uci || a.depth < depth) return i;
+      if (!a || a.uci !== moves[i].uci || (a.source !== 'cloud' && a.depth < depth)) return i;
     }
     return null;
   };
@@ -91,8 +122,12 @@ export function startAnalysisController(): () => void {
         const move = game.moves[i];
         const beforeFen = fenAt(game, i);
 
-        const before = await evaluatePosition(beforeFen, depth);
-        const after = await evaluatePosition(move.fen, depth);
+        const { before, after, source } = await evaluatePair(
+          beforeFen,
+          move.fen,
+          depth,
+          s.useCloudEval,
+        );
         if (gen !== generation) break;
 
         const cur = store.getState();
@@ -118,7 +153,11 @@ export function startAnalysisController(): () => void {
           before: beforeScore,
           after: afterSc,
           loss,
-          depth: Math.min(before.depth, after.depth) || depth,
+          depth:
+            source === 'cloud'
+              ? Math.max(depth, Math.min(before.depth, after.depth || before.depth))
+              : Math.min(before.depth, after.depth) || depth,
+          source,
         };
         cur.setAnnotation(i, ann);
       }
@@ -135,7 +174,13 @@ export function startAnalysisController(): () => void {
   };
 
   const unsubscribe = store.subscribe((s, prev) => {
-    if (s.game !== prev.game || s.analysisDepth !== prev.analysisDepth) schedule();
+    if (
+      s.game !== prev.game ||
+      s.analysisDepth !== prev.analysisDepth ||
+      s.useCloudEval !== prev.useCloudEval
+    ) {
+      schedule();
+    }
   });
   schedule();
 

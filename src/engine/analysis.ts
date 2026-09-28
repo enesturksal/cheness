@@ -28,6 +28,8 @@ export interface MoveAnnotation {
   /** Win-probability points lost by the move (>= 0). */
   loss: number;
   depth: number;
+  /** Where the evaluations came from. */
+  source?: 'engine' | 'cloud';
 }
 
 const MATE_CP = 10_000;
@@ -120,6 +122,58 @@ export function glyph(kind: MoveKind): string {
     default:
       return '';
   }
+}
+
+/** Lichess's per-move accuracy curve (0-100) from win-percentage loss. */
+export function moveAccuracy(loss: number): number {
+  const a = 103.1668 * Math.exp(-0.04354 * Math.max(0, loss)) - 3.1669;
+  return Math.max(0, Math.min(100, a));
+}
+
+export interface SideReport {
+  accuracy: number | null;
+  counts: Record<MoveKind, number>;
+  analysed: number;
+  total: number;
+}
+
+const EMPTY_COUNTS = (): Record<MoveKind, number> => ({
+  book: 0,
+  best: 0,
+  great: 0,
+  excellent: 0,
+  good: 0,
+  inaccuracy: 0,
+  mistake: 0,
+  blunder: 0,
+});
+
+/** Aggregate annotations per side; `colors[i]` is the colour that played move i. */
+export function gameReport(
+  annotations: readonly (MoveAnnotation | null)[],
+  colors: readonly ('white' | 'black')[],
+): { white: SideReport; black: SideReport } {
+  const make = (): SideReport => ({
+    accuracy: null,
+    counts: EMPTY_COUNTS(),
+    analysed: 0,
+    total: 0,
+  });
+  const out = { white: make(), black: make() };
+  const sums = { white: 0, black: 0 };
+  colors.forEach((c, i) => {
+    const side = out[c];
+    side.total += 1;
+    const a = annotations[i];
+    if (!a) return;
+    side.analysed += 1;
+    side.counts[a.kind] += 1;
+    sums[c] += moveAccuracy(a.loss);
+  });
+  for (const c of ['white', 'black'] as const) {
+    if (out[c].analysed > 0) out[c].accuracy = Math.round((sums[c] / out[c].analysed) * 10) / 10;
+  }
+  return out;
 }
 
 export type AnalysisDepth = 0 | 10 | 14 | 18;

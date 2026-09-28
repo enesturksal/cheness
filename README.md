@@ -22,7 +22,9 @@ explorer panel shows the offline book; log in to see the Lichess statistics._
 - **Bot** — Stockfish 19 (lite, single-threaded WASM) in a Web Worker. Six difficulty levels
   (`Skill Level` + `movetime`/`depth`), changeable at any time; the new level applies to the
   bot's next move. Runs offline; no SharedArrayBuffer / COOP-COEP headers needed.
-- **Move analysis** — a second, full-strength Stockfish instance grades every move
+- **Move analysis** — Lichess cloud evaluations (deep Stockfish, free, no login) when both
+  positions of a move are known, otherwise a second, full-strength local Stockfish instance;
+  it grades every move
   (Book / Best / Great / Excellent / Good / Inaccuracy / Mistake / Blunder) from the
   win-probability it gives away, using Lichess's published thresholds, and shows the engine's
   preferred move after a mistake. Badges in the move list, verdict + eval bar under the
@@ -36,6 +38,14 @@ explorer panel shows the offline book; log in to see the Lichess statistics._
 - **Takeover mode** — "I move for the opponent": the bot pauses and you play both sides;
   turn it off and the bot continues from the current position. Long-press (or tap twice) a
   continuation on the bot's turn to play that move for the opponent once.
+- **Home screen & modes** — Play (choose side and level), Analyse (paste a PGN from Lichess /
+  chess.com or a Lichess game link), Play with a friend (pass-and-play on one device, board
+  turns each move), Openings and Library.
+- **Arrows** — the eye button draws the three most played continuations on the board, fading
+  with popularity like Lichess; when there is no explorer data it draws the engine's top three
+  moves instead (Lichess cloud evaluation when available, otherwise local Stockfish).
+- **Openings screen** — the most played openings for White and for Black (with live Lichess
+  shares when logged in), each with Practice / Explore / all variations.
 - **Offline opening book** — the `lichess-org/chess-openings` dataset (CC0) is embedded and
   keyed by EPD, so opening names and named continuations work with no network, and
   transpositions resolve correctly.
@@ -137,7 +147,13 @@ Current files (Stockfish 19.0.0, lite single-thread):
   files are vendored under `public/stockfish/`. The single-thread build needs no
   cross-origin-isolation headers, which keeps GitHub Pages hosting trivial.
 - **Difficulty** — `src/engine/difficulty.ts` maps six levels to `Skill Level` 0–20 plus a
-  `movetime`/`depth` pair; Elo labels are indicative only.
+  `movetime`/`depth` pair. The Elo labels are rough estimates on a Lichess/FIDE-like scale
+  (chess.com ratings usually run 100–300 lower); they are not calibrated against any
+  platform. The level is read when the bot starts thinking, so a change applies from its
+  next move.
+- **Report accuracy** — per-move accuracy uses Lichess's curve
+  `103.1668·e^(−0.04354·loss) − 3.1669`, averaged per side; the game report lists every
+  inaccuracy/mistake/blunder with the engine's preferred move.
 - **History model** — linear history with a cursor; playing from an earlier position
   discards the future (no variation tree in the MVP). Undo against the bot steps back to
   your own turn.

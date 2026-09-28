@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { formatScore, negateScore } from '../engine/analysis';
 import { formatCount, movePercent, outcomePercents, total } from '../explorer/api';
 import {
   bookContinuations,
@@ -68,7 +69,7 @@ function Row({ uci, san, selected, onTap, onLongPress, children }: RowProps) {
     <button
       type="button"
       {...handlers}
-      className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors ${
+      className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors ${
         selected ? 'bg-bg3 ring-1 ring-accent' : 'hover:bg-bg3'
       }`}
     >
@@ -82,13 +83,14 @@ export function OpeningPanel() {
   const t = useT();
   const game = useStore((s) => s.game);
   const explorer = useStore((s) => s.explorer);
+  const suggestions = useStore((s) => s.suggestions);
   const tutorEnabled = useStore((s) => s.tutorEnabled);
   const explorerDb = useStore((s) => s.explorerDb);
   const previewUci = useStore((s) => s.previewUci);
   const setPreview = useStore((s) => s.setPreview);
   const playUci = useStore((s) => s.playUci);
   const setSettings = useStore((s) => s.setSettings);
-  const opponent = useStore((s) => s.opponent);
+  const mode = useStore((s) => s.mode);
   const takeover = useStore((s) => s.takeover);
   const playerColor = useStore((s) => s.playerColor);
   const queryKey = useStore((s) => explorerQueryFor(s).key);
@@ -96,7 +98,7 @@ export function OpeningPanel() {
 
   const fen = currentFen(game);
   const turn = turnOf(fen);
-  const humanTurn = opponent === 'human' || takeover || turn === playerColor;
+  const humanTurn = mode !== 'bot' || takeover || turn === playerColor;
   const opening = useMemo(() => openingForLine(game.moves, game.ply, game.startFen), [game]);
   const current = opening.opening;
   const lineUci = useMemo(() => game.moves.slice(0, game.ply).map((m) => m.uci), [game]);
@@ -133,12 +135,19 @@ export function OpeningPanel() {
   const shownApi = showAll ? apiMoves : apiMoves.slice(0, DEFAULT_ROWS);
   const apiUcis = new Set(apiMoves.map((m) => m.uci));
   const extraBook = book.filter((b) => !apiUcis.has(b.uci) && b.opening);
+  const bookRows = data && apiMoves.length > 0 ? extraBook : book;
+  const showSuggestions =
+    apiMoves.length === 0 &&
+    suggestions.fen === fen &&
+    suggestions.status === 'ok' &&
+    suggestions.lines.length > 0;
 
-  const nameForApiMove = (m: ExplorerMove) => {
-    const after = epdAfter(fen, m.uci);
-    const target = m.opening ?? (after ? (lookupEpd(after) ?? null) : null);
+  const nameAfter = (uci: string, api: OpeningName | null = null) => {
+    const after = epdAfter(fen, uci);
+    const target = api ?? (after ? (lookupEpd(after) ?? null) : null);
     return leadLabel(target, current);
   };
+  const nameForApiMove = (m: ExplorerMove) => nameAfter(m.uci, m.opening);
   const nameForBookMove = (b: BookContinuation) => leadLabel(b.opening ?? b.example, current);
 
   return (
@@ -233,15 +242,45 @@ export function OpeningPanel() {
         </div>
       )}
 
+      {showSuggestions && (
+        <div className="space-y-0.5">
+          <h3 className="px-2 text-xs font-semibold tracking-wide text-muted uppercase">
+            {suggestions.source === 'cloud' ? t('arrows.cloud') : t('arrows.engine')} · d
+            {suggestions.depth}
+          </h3>
+          {suggestions.lines.map((l) => {
+            const white = turn === 'white' ? l.score : negateScore(l.score);
+            const lead = nameAfter(l.uci);
+            return (
+              <Row
+                key={l.uci}
+                uci={l.uci}
+                san={l.san}
+                selected={previewUci === l.uci}
+                onTap={onTap}
+                onLongPress={onLongPress}
+              >
+                <span className="w-11 shrink-0 text-right text-xs tabular-nums text-muted">
+                  {formatScore(white)}
+                </span>
+                <div className="min-w-0 flex-1 truncate text-[11px] text-muted">
+                  {lead ? `→ ${lead}` : ''}
+                </div>
+              </Row>
+            );
+          })}
+        </div>
+      )}
+
       {(!data || apiMoves.length === 0 || extraBook.length > 0) && (
         <div className="space-y-0.5">
           <h3 className="px-2 text-xs font-semibold tracking-wide text-muted uppercase">
             {t('explorer.bookSource')}
           </h3>
-          {(data && apiMoves.length > 0 ? extraBook : book).length === 0 && (
+          {bookRows.length === 0 && (
             <p className="px-2 text-xs text-muted">{t('explorer.noBook')}</p>
           )}
-          {(data && apiMoves.length > 0 ? extraBook : book).slice(0, showAll ? 40 : 8).map((b) => {
+          {bookRows.slice(0, showAll ? 40 : 8).map((b) => {
             const lead = nameForBookMove(b);
             return (
               <Row
@@ -267,6 +306,15 @@ export function OpeningPanel() {
               </Row>
             );
           })}
+          {bookRows.length > 8 && (
+            <button
+              type="button"
+              className="px-2 py-1 text-xs text-accent"
+              onClick={() => setShowAll((v) => !v)}
+            >
+              {showAll ? '−' : `+${bookRows.length - 8}`}
+            </button>
+          )}
         </div>
       )}
 

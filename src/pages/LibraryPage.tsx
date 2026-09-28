@@ -61,7 +61,7 @@ function EntryDetail({
   onSelect: (e: BookEntry) => void;
 }) {
   const t = useT();
-  const loadLine = useStore((s) => s.loadLine);
+  const loadGame = useStore((s) => s.loadGame);
   // The parent keys this component by entry, so state resets naturally per opening.
   const game = useMemo(() => gameFromUciLine(entry.uci)!, [entry]);
   const [ply, setPly] = useState(game.moves.length);
@@ -145,21 +145,21 @@ function EntryDetail({
           <button
             type="button"
             className="btn btn-primary"
-            onClick={() => loadLine(entry.uci, { playerColor: 'white', opponent: 'bot' })}
+            onClick={() => loadGame(entry.uci, { mode: 'bot', playerColor: 'white' })}
           >
             {t('library.practiceWhite')}
           </button>
           <button
             type="button"
             className="btn btn-primary"
-            onClick={() => loadLine(entry.uci, { playerColor: 'black', opponent: 'bot' })}
+            onClick={() => loadGame(entry.uci, { mode: 'bot', playerColor: 'black' })}
           >
             {t('library.practiceBlack')}
           </button>
           <button
             type="button"
             className="btn"
-            onClick={() => loadLine(entry.uci, { opponent: 'human' })}
+            onClick={() => loadGame(entry.uci, { mode: 'explore' })}
           >
             {t('library.explore')}
           </button>
@@ -219,7 +219,16 @@ function FamilyView({
 export function LibraryPage() {
   const t = useT();
   const [query, setQuery] = useState('');
-  const [family, setFamily] = useState<Family | null>(null);
+  // The Openings screen can ask for a family to be opened directly.
+  const requested = useStore((s) => s.libraryFamily);
+  const openLibraryFamily = useStore((s) => s.openLibraryFamily);
+  const [family, setFamilyState] = useState<Family | null>(() =>
+    requested ? (familyOf(requested) ?? null) : null,
+  );
+  const setFamily = (f: Family | null) => {
+    if (requested) openLibraryFamily(null);
+    setFamilyState(f);
+  };
   const [entry, setEntry] = useState<BookEntry | null>(null);
   const [open, setOpen] = useState<Set<Volume>>(() => new Set());
 
