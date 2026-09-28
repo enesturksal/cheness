@@ -9,7 +9,7 @@ import {
 import { useT } from '../i18n/useT';
 import { useStore } from '../store/useStore';
 
-const TOKEN_PAGE = 'https://lichess.org/account/oauth/token/create?description=BookLine';
+const TOKEN_PAGE = 'https://lichess.org/account/oauth/token/create?description=Cheness';
 const TOKENS_LIST = 'https://lichess.org/account/oauth/token';
 
 /** Lichess sign-in state: OAuth login, personal token paste, account summary and logout. */

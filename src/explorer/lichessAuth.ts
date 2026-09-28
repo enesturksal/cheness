@@ -7,8 +7,8 @@
 import { sha256 } from './sha256';
 
 export const LICHESS = 'https://lichess.org';
-const CLIENT_ID = 'bookline-opening-trainer';
-const PKCE_KEY = 'bookline.lichess.pkce';
+const CLIENT_ID = 'cheness-opening-trainer';
+const PKCE_KEY = 'cheness.lichess.pkce';
 
 export interface LichessSession {
   token: string;

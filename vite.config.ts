@@ -15,8 +15,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'BookLine - Chess Opening Trainer',
-        short_name: 'BookLine',
+        name: 'Cheness - Chess Opening Trainer',
+        short_name: 'Cheness',
         description:
           'Play Stockfish in the browser with a live opening explorer: opening names, variations and popular continuations after every move.',
         theme_color: '#161512',

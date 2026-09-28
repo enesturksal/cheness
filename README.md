@@ -1,4 +1,4 @@
-# BookLine — Chess Opening Trainer
+# Cheness — Chess Opening Trainer
 
 Mobile-first, fully client-side chess opening trainer. Play against Stockfish in the browser
 while a live panel under the board tells you **which opening and variation you are in**, shows
@@ -98,7 +98,7 @@ tools/             Python data pipeline (chess-openings TSV -> openings.json), i
 
 ## Hosting model
 
-BookLine is a static site: HTML, JS, WASM and JSON files, nothing else. There is no server,
+Cheness is a static site: HTML, JS, WASM and JSON files, nothing else. There is no server,
 no database and no Docker image. Any static host serves it; the repo ships a GitHub Pages
 workflow, so after `git push` the app lives at a fixed HTTPS URL that works on every device
 (phone, tablet, desktop) whether or not your own computer is on. On a phone, "Add to Home
@@ -182,7 +182,7 @@ Current files (Stockfish 19.0.0, lite single-thread):
   discards the future (no variation tree in the MVP). Undo against the bot steps back to
   your own turn.
 - **License** — chessground and Stockfish are GPL-3.0; a combined work distributed to users
-  must be GPL-compatible, so BookLine is licensed **GPL-3.0-or-later** (the brief suggested
+  must be GPL-compatible, so Cheness is licensed **GPL-3.0-or-later** (the brief suggested
   MIT, which would not be compliant).
 
 ## Roadmap

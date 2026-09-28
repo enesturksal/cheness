@@ -28,7 +28,7 @@ jobs:
       - run: npm test
       - run: npm run build
         env:
-          # Project sites are served from https://<user>.github.io/<repo>/
+          # Project sites are served from https://<user>.github.io/<repo>/ (repo name as typed on GitHub)
           VITE_BASE: /${{ github.event.repository.name }}/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

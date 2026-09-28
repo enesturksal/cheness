@@ -301,7 +301,7 @@ export const useStore = create<StoreState>()(
         }),
     }),
     {
-      name: 'bookline',
+      name: 'cheness',
       version: 2,
       partialize: (s) => ({
         playerColor: s.playerColor,

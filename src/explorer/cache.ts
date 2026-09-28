@@ -5,7 +5,7 @@ import type { ExplorerResponse } from './types';
  * so positions survive reloads. IndexedDB may be unavailable (private mode, quota); every
  * access is guarded and silently falls back to memory only.
  */
-const DB_NAME = 'bookline';
+const DB_NAME = 'cheness';
 const STORE = 'explorer';
 const DB_VERSION = 1;
 const TTL_MS = 14 * 24 * 60 * 60 * 1000;

@@ -265,7 +265,7 @@ export function SettingsPanel() {
 
       <Section title={t('settings.about')}>
         <p className="text-xs leading-relaxed text-muted">
-          BookLine · Stockfish 19 (lite, single-thread WASM, GPL-3.0) · chessground (GPL-3.0) ·
+          Cheness · Stockfish 19 (lite, single-thread WASM, GPL-3.0) · chessground (GPL-3.0) ·
           chess.js (BSD-2) · Opening names: lichess-org/chess-openings (CC0, {bookMeta().count}{' '}
           {t('library.openings')}, {bookMeta().generatedAt}) · Statistics: Lichess Opening Explorer
           · Deep evaluations: Lichess cloud eval, ChessDB · Theory: Wikibooks (CC BY-SA).

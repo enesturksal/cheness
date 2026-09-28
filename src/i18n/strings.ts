@@ -1,7 +1,7 @@
 /** Minimal i18n: a flat dictionary per language, no library. */
 export const strings = {
   en: {
-    appName: 'BookLine',
+    appName: 'Cheness',
     'nav.play': 'Play',
     'nav.library': 'Library',
     'tabs.opening': 'Opening',
@@ -209,7 +209,7 @@ export const strings = {
     'profile.title': 'Profile',
     'profile.desc': 'Lichess sign-in, usernames, language and theme.',
     'profile.intro':
-      'BookLine has no server: everything you enter here is stored only in this browser, on this device. Share the app link freely; each person signs in with their own account.',
+      'Cheness has no server: everything you enter here is stored only in this browser, on this device. Share the app link freely; each person signs in with their own account.',
     'profile.usernames': 'Usernames for "My games"',
     'profile.usernamesHint':
       'Public games are fetched from Lichess (needs the Lichess sign-in above) and from the chess.com public API.',
@@ -218,11 +218,11 @@ export const strings = {
     'lichess.invalid': 'token rejected',
     'lichess.revokeHint': 'You can revoke tokens any time at',
     'lichess.securityNote':
-      'Never share a token or put it in a public place: it acts as your account. A token with no scopes is enough for BookLine.',
+      'Never share a token or put it in a public place: it acts as your account. A token with no scopes is enough for Cheness.',
     'settings.profileLink': 'Lichess sign-in and usernames are on the Profile page.',
   },
   tr: {
-    appName: 'BookLine',
+    appName: 'Cheness',
     'nav.play': 'Oyun',
     'nav.library': 'Kütüphane',
     'tabs.opening': 'Açılış',
@@ -432,7 +432,7 @@ export const strings = {
     'profile.title': 'Profil',
     'profile.desc': 'Lichess girişi, kullanıcı adları, dil ve tema.',
     'profile.intro':
-      'BookLine’ın sunucusu yok: burada girdiğin her şey yalnızca bu tarayıcıda, bu cihazda saklanır. Uygulama linkini istediğin gibi paylaş; herkes kendi hesabıyla giriş yapar.',
+      'Cheness’in sunucusu yok: burada girdiğin her şey yalnızca bu tarayıcıda, bu cihazda saklanır. Uygulama linkini istediğin gibi paylaş; herkes kendi hesabıyla giriş yapar.',
     'profile.usernames': '"Oyunlarım" için kullanıcı adları',
     'profile.usernamesHint':
       'Lichess oyunları yukarıdaki Lichess girişiyle, chess.com oyunları herkese açık API ile çekilir.',
@@ -441,7 +441,7 @@ export const strings = {
     'lichess.invalid': 'token reddedildi',
     'lichess.revokeHint': 'Token’ları istediğin zaman iptal edebilirsin:',
     'lichess.securityNote':
-      'Token’ı kimseyle paylaşma, herkese açık bir yere koyma: hesabın adına işlem yapabilir. BookLine için yetkisiz (scope’suz) token yeterli.',
+      'Token’ı kimseyle paylaşma, herkese açık bir yere koyma: hesabın adına işlem yapabilir. Cheness için yetkisiz (scope’suz) token yeterli.',
     'settings.profileLink': 'Lichess girişi ve kullanıcı adları Profil sayfasında.',
   },
 } as const;

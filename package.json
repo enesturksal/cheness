@@ -1,9 +1,9 @@
 {
-  "name": "bookline",
+  "name": "cheness",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "BookLine - mobile-first chess opening trainer: play Stockfish in the browser with a live Lichess opening explorer.",
+  "description": "Cheness - mobile-first chess opening trainer: play Stockfish in the browser with a live Lichess opening explorer.",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=20.19"
