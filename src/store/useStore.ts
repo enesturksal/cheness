@@ -22,8 +22,8 @@ import {
  */
 export type Mode = 'bot' | 'friends' | 'explore' | 'analysis';
 export type Theme = 'dark' | 'light';
-export type View = 'home' | 'play' | 'library' | 'openings';
-export type PanelTab = 'opening' | 'moves' | 'report' | 'settings';
+export type View = 'home' | 'play' | 'library' | 'openings' | 'games';
+export type PanelTab = 'opening' | 'literature' | 'moves' | 'report' | 'settings';
 export type EngineStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type ExplorerStatus =
   | 'idle'
@@ -53,7 +53,7 @@ export interface Suggestion {
 export interface SuggestionState {
   fen: string | null;
   status: 'idle' | 'loading' | 'ok' | 'none';
-  source: 'cloud' | 'engine' | null;
+  source: 'cloud' | 'chessdb' | 'engine' | null;
   depth: number;
   lines: Suggestion[];
 }
@@ -88,6 +88,9 @@ export interface Settings {
   analysisDepth: AnalysisDepth;
   /** Prefer Lichess cloud evaluations (deep Stockfish) when available. */
   useCloudEval: boolean;
+  /** Usernames remembered for the "My games" screen. */
+  lichessUsername: string;
+  chesscomUsername: string;
 }
 
 export interface NewGameOptions {
@@ -163,6 +166,8 @@ const defaultSettings: Settings = {
   lichessUser: null,
   analysisDepth: 10,
   useCloudEval: true,
+  lichessUsername: '',
+  chesscomUsername: '',
 };
 
 const idleSuggestions: SuggestionState = {
@@ -315,6 +320,8 @@ export const useStore = create<StoreState>()(
         lichessUser: s.lichessUser,
         analysisDepth: s.analysisDepth,
         useCloudEval: s.useCloudEval,
+        lichessUsername: s.lichessUsername,
+        chesscomUsername: s.chesscomUsername,
         game: s.game,
         mode: s.mode,
         meta: s.meta,

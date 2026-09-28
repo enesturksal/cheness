@@ -105,3 +105,27 @@ export async function cacheSet(key: string, data: ExplorerResponse): Promise<voi
 export function clearMemoryCache(): void {
   memory.clear();
 }
+
+// ---- Generic key/value cache (same IndexedDB store, namespaced keys) for other sources ----
+const kvMemory = new Map<string, { v: unknown; ts: number }>();
+
+export async function kvGet<T>(key: string): Promise<T | null> {
+  const m = kvMemory.get(key);
+  if (m && Date.now() - m.ts < TTL_MS) return m.v as T;
+  const e = (await idbGet(`kv|${key}`)) as unknown as { v: T; ts: number } | null;
+  if (e && Date.now() - e.ts < TTL_MS) {
+    kvMemory.set(key, e);
+    return e.v;
+  }
+  return null;
+}
+
+export async function kvSet<T>(key: string, v: T): Promise<void> {
+  const entry = { v, ts: Date.now() };
+  if (kvMemory.size >= MEMORY_CAP) {
+    const oldest = kvMemory.keys().next().value;
+    if (oldest !== undefined) kvMemory.delete(oldest);
+  }
+  kvMemory.set(key, entry);
+  await idbSet(`kv|${key}`, entry as unknown as Entry);
+}

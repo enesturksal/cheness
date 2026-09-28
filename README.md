@@ -46,6 +46,12 @@ explorer panel shows the offline book; log in to see the Lichess statistics._
   moves instead (Lichess cloud evaluation when available, otherwise local Stockfish).
 - **Openings screen** — the most played openings for White and for Black (with live Lichess
   shares when logged in), each with Practice / Explore / all variations.
+- **Theory tab** — human-written opening theory for the current line from Wikibooks'
+  _Chess Opening Theory_ (CC BY-SA, English), falling back to the nearest covered parent line.
+- **My games** — pull your recent games from Lichess or chess.com (public APIs), review any
+  of them with the engine report, and see which openings you play and how you score in each.
+- **Engine data sources** — Lichess cloud evaluations, ChessDB (chessdb.cn) scores and local
+  Stockfish, in that order of preference.
 - **Offline opening book** — the `lichess-org/chess-openings` dataset (CC0) is embedded and
   keyed by EPD, so opening names and named continuations work with no network, and
   transpositions resolve correctly.
@@ -174,8 +180,12 @@ Current files (Stockfish 19.0.0, lite single-thread):
 - Stockfish and the [stockfish.js](https://github.com/nmrugg/stockfish.js) WASM port (GPL-3.0)
 - [chessground](https://github.com/lichess-org/chessground) (GPL-3.0),
   [chess.js](https://github.com/jhlywa/chess.js) (BSD-2-Clause)
-- [lichess-org/chess-openings](https://github.com/lichess-org/chess-openings) (CC0) and the
-  [Lichess Opening Explorer](https://lichess.org/api#tag/Opening-Explorer)
+- [lichess-org/chess-openings](https://github.com/lichess-org/chess-openings) (CC0), the
+  [Lichess Opening Explorer](https://lichess.org/api#tag/Opening-Explorer) and
+  [Lichess cloud evaluations](https://lichess.org/api#tag/Analysis)
+- [Wikibooks: Chess Opening Theory](https://en.wikibooks.org/wiki/Chess_Opening_Theory)
+  (CC BY-SA 4.0), [ChessDB](https://www.chessdb.cn/), the
+  [chess.com public API](https://www.chess.com/news/view/published-data-api)
 
 ## License
 

@@ -25,7 +25,9 @@ export function TopBar() {
         ? t('nav.library')
         : view === 'openings'
           ? t('nav.openings')
-          : null;
+          : view === 'games'
+            ? t('home.games')
+            : null;
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">

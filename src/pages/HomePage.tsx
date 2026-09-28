@@ -1,5 +1,12 @@
 import { useMemo, useState } from 'react';
-import { IconBook, IconChart, IconLibrary, IconPlay, IconUsers } from '../components/Icons';
+import {
+  IconBook,
+  IconChart,
+  IconHistory,
+  IconLibrary,
+  IconPlay,
+  IconUsers,
+} from '../components/Icons';
 import { LEVELS, type LevelId } from '../engine/difficulty';
 import { openingForLine } from '../explorer/book';
 import { movetext, type Color } from '../game/game';
@@ -211,6 +218,12 @@ export function HomePage() {
           title={t('home.library')}
           desc={t('home.libraryDesc')}
           onClick={() => setView('library')}
+        />
+        <Card
+          icon={<IconHistory />}
+          title={t('home.games')}
+          desc={t('home.gamesDesc')}
+          onClick={() => setView('games')}
         />
       </div>
     </div>

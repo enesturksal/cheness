@@ -108,6 +108,12 @@ export const IconBook = () => (
     <path d="M4 19a2 2 0 0 1 2-2h13M8 7h7" />
   </svg>
 );
+export const IconHistory = () => (
+  <svg {...big}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </svg>
+);
 export const IconLibrary = () => (
   <svg {...big}>
     <path d="M4 4h4v16H4zM10 4h4v16h-4zM16.5 5.5l3.5-1 4 15-3.5 1z" />

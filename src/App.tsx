@@ -7,6 +7,7 @@ import { startExplorerController } from './explorer/controller';
 import { completeLoginFromUrl, fetchUsername } from './explorer/lichessAuth';
 import { HomePage } from './pages/HomePage';
 import { LibraryPage } from './pages/LibraryPage';
+import { MyGamesPage } from './pages/MyGamesPage';
 import { OpeningsPage } from './pages/OpeningsPage';
 import { PlayPage } from './pages/PlayPage';
 import { useStore } from './store/useStore';
@@ -50,6 +51,7 @@ export default function App() {
         {view === 'play' && <PlayPage />}
         {view === 'library' && <LibraryPage />}
         {view === 'openings' && <OpeningsPage />}
+        {view === 'games' && <MyGamesPage />}
       </main>
     </div>
   );

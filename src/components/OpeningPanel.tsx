@@ -245,8 +245,12 @@ export function OpeningPanel() {
       {showSuggestions && (
         <div className="space-y-0.5">
           <h3 className="px-2 text-xs font-semibold tracking-wide text-muted uppercase">
-            {suggestions.source === 'cloud' ? t('arrows.cloud') : t('arrows.engine')} · d
-            {suggestions.depth}
+            {suggestions.source === 'cloud'
+              ? t('arrows.cloud')
+              : suggestions.source === 'chessdb'
+                ? t('arrows.chessdb')
+                : t('arrows.engine')}
+            {suggestions.depth ? ` · d${suggestions.depth}` : ''}
           </h3>
           {suggestions.lines.map((l) => {
             const white = turn === 'white' ? l.score : negateScore(l.score);

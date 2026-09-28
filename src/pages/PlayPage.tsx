@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { DrawShape } from '@lichess-org/chessground/draw';
 import { Board } from '../components/Board';
 import { Controls } from '../components/Controls';
+import { LiteraturePanel } from '../components/LiteraturePanel';
 import { MoveList } from '../components/MoveList';
 import { OpeningPanel } from '../components/OpeningPanel';
 import { ReportPanel } from '../components/ReportPanel';
@@ -14,7 +15,7 @@ import { currentFen, destsFor, lastMoveSquares, parseUci, statusOf, turnOf } fro
 import { useT } from '../i18n/useT';
 import { useStore, type PanelTab } from '../store/useStore';
 
-const TABS: PanelTab[] = ['opening', 'moves', 'report', 'settings'];
+const TABS: PanelTab[] = ['opening', 'literature', 'moves', 'report', 'settings'];
 
 /** Brush names defined in Board.tsx: popular moves fade with rank, engine lines are blue. */
 const POP_BRUSH = ['pop1', 'pop2', 'pop3'];
@@ -82,6 +83,7 @@ export function PlayPage() {
 
   const tabLabel: Record<PanelTab, string> = {
     opening: t('tabs.opening'),
+    literature: t('tabs.literature'),
     moves: t('tabs.moves'),
     report: t('tabs.report'),
     settings: t('tabs.settings'),
@@ -127,6 +129,7 @@ export function PlayPage() {
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {panelTab === 'opening' && <OpeningPanel />}
+          {panelTab === 'literature' && <LiteraturePanel />}
           {panelTab === 'moves' && <MoveList />}
           {panelTab === 'report' && <ReportPanel />}
           {panelTab === 'settings' && <SettingsPanel />}

@@ -94,8 +94,18 @@ function LichessAccount() {
       </div>
       <label className="text-xs text-muted">
         {t('lichess.tokenLabel')}
-        <span className="block">{t('lichess.tokenHint')}</span>
+        <span className="block">{t('lichess.howTo')}</span>
       </label>
+      <div>
+        <a
+          className="btn"
+          href="https://lichess.org/account/oauth/token/create?description=BookLine"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {t('lichess.openTokenPage')}
+        </a>
+      </div>
       <div className="flex gap-2">
         <input
           type="password"

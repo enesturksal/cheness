@@ -1,5 +1,6 @@
 import { currentFen, sanFromUci, statusOf } from '../game/game';
 import { humanToMove, useStore, type Suggestion, type SuggestionState } from '../store/useStore';
+import { fetchChessDb } from './chessdb';
 import { fetchCloudEval } from './cloudEval';
 import { getEngine } from './engineManager';
 
@@ -80,6 +81,13 @@ export function startSuggestionController(): () => void {
           depth: cloud.depth,
           lines: toSuggestions(cloud.lines),
         };
+      }
+    }
+    if (!result && s.useCloudEval) {
+      const db = await fetchChessDb(fen);
+      if (gen !== generation) return;
+      if (db && db.length) {
+        result = { fen, status: 'ok', source: 'chessdb', depth: 0, lines: toSuggestions(db) };
       }
     }
     if (!result) {

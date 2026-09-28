@@ -99,6 +99,21 @@ if ((await rows.count()) > 0) {
   if (!played) fail('second tap did not play the move');
 } else fail('no book continuations listed');
 
+// Theory tab (Wikibooks)
+await tab(page, /^(Teori|Theory)$/);
+try {
+  await page.waitForSelector('text=/Wikibooks/', { timeout: 30000 });
+  await page.waitForFunction(
+    () => !/Teori yükleniyor|Loading theory/.test(document.body.innerText),
+    { timeout: 30000 },
+  );
+  const theory = (await text(page)).includes('Wikibooks');
+  console.log('theory tab:', theory ? 'ok' : 'FAILED');
+  await shot(page, '04b-theory');
+} catch {
+  fail('theory tab did not load');
+}
+
 await page.getByRole('button', { name: /^(Geri al|Undo)$/ }).click();
 await page.waitForTimeout(300);
 await tab(page, /^(Ayarlar|Settings)$/);
@@ -141,9 +156,35 @@ await page
   .first()
   .click();
 await page.waitForSelector('text=Italian Game');
-await page.getByRole('button', { name: /^(Siyah için|For Black)$/ }).click();
 await page.waitForSelector('text=Sicilian Defense');
+const familyRows = await page.locator('button:has(span.eco)').count();
+console.log('openings page rows:', familyRows);
+if (familyRows < 40) fail('openings page shows too few families');
 await shot(page, '07-openings');
+
+// ---- My games (chess.com public API) ----
+await page
+  .getByRole('button', { name: /^(Ana sayfa|Home)$/ })
+  .first()
+  .click();
+await page
+  .getByRole('button', { name: /^(Oyunlarım|My games)/ })
+  .first()
+  .click();
+await page.getByRole('button', { name: 'chess.com' }).click();
+await page.locator('input').fill('hikaru');
+await page.getByRole('button', { name: /Oyunları getir|Fetch games/ }).click();
+try {
+  await page.waitForSelector('text=/Son oyunlar|Recent games/', { timeout: 60000 });
+  console.log(
+    'chess.com games:',
+    await page.locator('button:has-text("İncele"), button:has-text("Review")').count(),
+  );
+} catch {
+  // chess.com sits behind a bot check that headless Chrome sometimes fails: warn only.
+  console.log('chess.com games: not loaded (bot check?) - verify in a real browser');
+}
+await shot(page, '07b-my-games');
 
 // ---- Library ----
 await page
@@ -205,8 +246,9 @@ await desk.waitForSelector('cg-board', { timeout: 30000 });
 await desk.waitForTimeout(1000);
 await shot(desk, '12-desktop-play');
 
-if (errors.length) {
-  console.log('console errors/warnings:\n' + errors.join('\n'));
+const relevant = errors.filter((e) => !/api\.chess\.com|ERR_FAILED/.test(e));
+if (relevant.length) {
+  console.log('console errors/warnings:\n' + relevant.join('\n'));
   fail('console reported errors');
 }
 console.log(process.exitCode ? 'SMOKE FAILED' : 'SMOKE OK', `(screenshots in ${OUT}/)`);
