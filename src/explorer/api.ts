@@ -109,6 +109,8 @@ export function movePercent(move: Outcome, position: Outcome): number {
 }
 
 export function formatCount(n: number): string {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+  if (n >= 100_000_000) return `${Math.round(n / 1_000_000)}M`;
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 10_000) return `${Math.round(n / 1000)}k`;
   if (n >= 1_000) return `${(n / 1000).toFixed(1)}k`;

@@ -54,7 +54,11 @@ export function TopBar() {
           <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="size-6 rounded" />
           <span className="text-base font-bold tracking-tight">{t('appName')}</span>
         </button>
-        {title && <span className="chip ml-1 text-muted">{title}</span>}
+        {title && (
+          <span className="chip ml-1 max-w-[38vw] truncate whitespace-nowrap text-muted sm:max-w-none">
+            {title}
+          </span>
+        )}
         <div className="grow" />
         <button
           type="button"

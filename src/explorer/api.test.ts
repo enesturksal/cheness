@@ -93,5 +93,7 @@ describe('explorer api', () => {
     expect(formatCount(1500)).toBe('1.5k');
     expect(formatCount(25_000)).toBe('25k');
     expect(formatCount(3_200_000)).toBe('3.2M');
+    expect(formatCount(238_760_182)).toBe('239M');
+    expect(formatCount(4_528_100_000)).toBe('4.5B');
   });
 });
