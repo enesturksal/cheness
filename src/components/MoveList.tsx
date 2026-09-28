@@ -1,17 +1,26 @@
 import { useEffect, useRef } from 'react';
+import { KIND_LABEL_KEY, type MoveAnnotation } from '../engine/analysis';
 import { moveNumberOf, turnOf } from '../game/game';
 import { useT } from '../i18n/useT';
 import { useStore } from '../store/useStore';
+import { KindBadge } from './KindBadge';
+
+interface Cell {
+  san: string;
+  ply: number;
+  ann: MoveAnnotation | null;
+}
 
 interface Row {
   no: number;
-  white?: { san: string; ply: number };
-  black?: { san: string; ply: number };
+  white?: Cell;
+  black?: Cell;
 }
 
 export function MoveList() {
   const t = useT();
   const game = useStore((s) => s.game);
+  const annotations = useStore((s) => s.annotations);
   const goToPly = useStore((s) => s.goToPly);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -29,19 +38,20 @@ export function MoveList() {
   let no = moveNumberOf(game.startFen);
   let whiteNext = turnOf(game.startFen) === 'white';
   game.moves.forEach((m, i) => {
-    const ply = i + 1;
+    const ann = annotations[i] && annotations[i]!.uci === m.uci ? annotations[i] : null;
+    const cell: Cell = { san: m.san, ply: i + 1, ann };
     if (whiteNext) {
-      rows.push({ no, white: { san: m.san, ply } });
+      rows.push({ no, white: cell });
     } else {
       const last = rows[rows.length - 1];
-      if (last && !last.black) last.black = { san: m.san, ply };
-      else rows.push({ no, black: { san: m.san, ply } });
+      if (last && !last.black) last.black = cell;
+      else rows.push({ no, black: cell });
       no += 1;
     }
     whiteNext = !whiteNext;
   });
 
-  const cell = (mv: { san: string; ply: number } | undefined) => {
+  const render = (mv: Cell | undefined) => {
     if (!mv) return <span className="px-2 py-1 text-muted">…</span>;
     const current = mv.ply === game.ply;
     return (
@@ -49,11 +59,12 @@ export function MoveList() {
         type="button"
         data-current={current}
         onClick={() => goToPly(mv.ply)}
-        className={`rounded px-2 py-1 text-left font-medium hover:bg-bg3 ${
+        className={`flex items-center gap-1 rounded px-2 py-1 text-left font-medium hover:bg-bg3 ${
           current ? 'bg-accent text-accent-fg hover:bg-accent' : ''
         }`}
       >
-        {mv.san}
+        <span>{mv.san}</span>
+        {mv.ann && <KindBadge kind={mv.ann.kind} title={t(KIND_LABEL_KEY[mv.ann.kind])} />}
       </button>
     );
   };
@@ -63,8 +74,8 @@ export function MoveList() {
       {rows.map((r) => (
         <div key={r.no} className="contents">
           <span className="px-1 py-1 text-right font-mono text-xs text-muted">{r.no}.</span>
-          {cell(r.white)}
-          {cell(r.black)}
+          {render(r.white)}
+          {render(r.black)}
         </div>
       ))}
     </div>

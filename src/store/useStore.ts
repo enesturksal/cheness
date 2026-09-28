@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import * as G from '../game/game';
+import type { AnalysisDepth, MoveAnnotation } from '../engine/analysis';
 import { DEFAULT_LEVEL, type LevelId } from '../engine/difficulty';
 import { detectLang, type Lang } from '../i18n/strings';
 import {
@@ -50,6 +51,8 @@ export interface Settings {
   /** Lichess OAuth / personal token; the opening explorer API requires one (since 2026). */
   lichessToken: string | null;
   lichessUser: string | null;
+  /** Engine depth for move classification; 0 disables it. */
+  analysisDepth: AnalysisDepth;
 }
 
 export interface NewGameOptions {
@@ -71,6 +74,8 @@ export interface StoreState extends Settings {
   view: View;
   panelTab: PanelTab;
   explorer: ExplorerState;
+  /** Engine verdict per played move (index = ply - 1); null while pending. */
+  annotations: (MoveAnnotation | null)[];
 
   playUci: (uci: string) => boolean;
   undo: () => void;
@@ -87,6 +92,7 @@ export interface StoreState extends Settings {
   setView: (v: View) => void;
   setPanelTab: (v: PanelTab) => void;
   setExplorer: (e: ExplorerState) => void;
+  setAnnotation: (index: number, a: MoveAnnotation) => void;
 }
 
 const defaultSettings: Settings = {
@@ -103,6 +109,7 @@ const defaultSettings: Settings = {
   autoQueen: false,
   lichessToken: null,
   lichessUser: null,
+  analysisDepth: 10,
 };
 
 function pickColor(c: G.Color | 'random' | undefined, fallback: G.Color): G.Color {
@@ -124,11 +131,14 @@ export const useStore = create<StoreState>()(
       view: 'play',
       panelTab: 'opening',
       explorer: { key: null, status: 'idle', data: null },
+      annotations: [],
 
       playUci: (uci) => {
-        const next = G.applyUci(get().game, uci);
+        const s = get();
+        const next = G.applyUci(s.game, uci);
         if (!next) return false;
-        set({ game: next, previewUci: null });
+        // Branching discards annotations of the moves that were cut off.
+        set({ game: next, previewUci: null, annotations: s.annotations.slice(0, s.game.ply) });
         return true;
       },
 
@@ -167,6 +177,7 @@ export const useStore = create<StoreState>()(
             takeover: false,
             botThinking: false,
             previewUci: null,
+            annotations: [],
             view: 'play',
           };
         }),
@@ -185,6 +196,7 @@ export const useStore = create<StoreState>()(
             takeover: false,
             botThinking: false,
             previewUci: null,
+            annotations: [],
             view: 'play',
             panelTab: 'opening',
           };
@@ -201,6 +213,14 @@ export const useStore = create<StoreState>()(
       setView: (v) => set({ view: v, previewUci: null }),
       setPanelTab: (v) => set({ panelTab: v }),
       setExplorer: (e) => set({ explorer: e }),
+      setAnnotation: (index, a) =>
+        set((s) => {
+          if (index < 0 || index >= s.game.moves.length) return {};
+          const annotations = s.annotations.slice(0, s.game.moves.length);
+          while (annotations.length < index) annotations.push(null);
+          annotations[index] = a;
+          return { annotations };
+        }),
     }),
     {
       name: 'bookline',
@@ -219,6 +239,7 @@ export const useStore = create<StoreState>()(
         autoQueen: s.autoQueen,
         lichessToken: s.lichessToken,
         lichessUser: s.lichessUser,
+        analysisDepth: s.analysisDepth,
         game: s.game,
         orientation: s.orientation,
       }),

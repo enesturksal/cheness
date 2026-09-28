@@ -18,14 +18,21 @@ export interface SearchResult {
   ponder?: string;
 }
 
-export interface Evaluation {
-  /** Centipawns from the side to move's perspective, or null when a mate score is given. */
+/** One principal variation from a UCI `info` line (scores from the side to move). */
+export interface EvalLine {
+  multipv: number;
   cp: number | null;
-  /** Mate in N (negative if getting mated), from the side to move's perspective. */
   mate: number | null;
   depth: number;
-  bestmove: string | null;
   pv: string[];
+}
+
+export interface Evaluation {
+  /** Lines ordered by multipv (1 = best). */
+  lines: EvalLine[];
+  bestmove: string | null;
+  /** Depth reached by the main line. */
+  depth: number;
 }
 
 export class Engine {
@@ -95,6 +102,7 @@ export class Engine {
     return this.enqueue(async () => {
       await this.ready;
       this.send(`setoption name Skill Level value ${clamp(opts.skill, 0, 20)}`);
+      this.send('setoption name MultiPV value 1');
       this.send(`position fen ${fen}`);
       const go = ['go'];
       if (opts.depth) go.push('depth', String(opts.depth));
@@ -113,23 +121,45 @@ export class Engine {
     });
   }
 
-  /** Full-strength evaluation to a fixed depth, for move classification. */
-  evaluate(fen: string, depth: number): Promise<Evaluation> {
+  /**
+   * Full-strength evaluation to a fixed depth, for move classification. With `multiPv > 1`
+   * the runner-up lines are returned too (needed to tell "great" moves from merely best ones).
+   */
+  evaluate(fen: string, depth: number, multiPv = 1): Promise<Evaluation> {
     return this.enqueue(async () => {
       await this.ready;
       this.send('setoption name Skill Level value 20');
+      this.send(`setoption name MultiPV value ${clamp(multiPv, 1, 5)}`);
       this.send(`position fen ${fen}`);
-      let last: Evaluation = { cp: null, mate: null, depth: 0, bestmove: null, pv: [] };
+      const lines = new Map<number, EvalLine>();
+      let depthReached = 0;
       const off = this.onLine((line) => {
-        const info = parseInfo(line);
-        if (info) last = { ...last, ...info };
+        const info = parseInfo(line, true);
+        if (!info) return;
+        const idx = info.multipv ?? 1;
+        const d = info.depth ?? 0;
+        const prev = lines.get(idx);
+        if (!prev || d >= prev.depth) {
+          lines.set(idx, {
+            multipv: idx,
+            cp: info.cp ?? null,
+            mate: info.mate ?? null,
+            depth: d,
+            pv: info.pv ?? [],
+          });
+        }
+        if (idx === 1) depthReached = Math.max(depthReached, d);
       });
       this.searching = true;
-      const done = this.waitFor((l) => l.startsWith('bestmove'), 60_000);
+      const done = this.waitFor((l) => l.startsWith('bestmove'), 120_000);
       this.send(`go depth ${depth}`);
       try {
         const { bestmove } = parseBestmove(await done);
-        return { ...last, bestmove };
+        return {
+          lines: [...lines.values()].sort((a, b) => a.multipv - b.multipv),
+          bestmove,
+          depth: depthReached,
+        };
       } finally {
         off();
         this.searching = false;
@@ -165,13 +195,28 @@ export function parseBestmove(line: string): SearchResult {
   };
 }
 
-/** Parse a UCI `info` line with a score; returns null for other lines or multipv > 1. */
-export function parseInfo(line: string): Partial<Evaluation> | null {
+export interface InfoLine {
+  depth: number;
+  cp: number | null;
+  mate: number | null;
+  pv: string[];
+  /** Only present for secondary lines (multipv >= 2). */
+  multipv?: number;
+}
+
+/**
+ * Parse a UCI `info` line carrying a score. Returns null for other lines, and for
+ * multipv > 1 lines unless `allowMultiPv` is set.
+ */
+export function parseInfo(line: string, allowMultiPv = false): Partial<InfoLine> | null {
   if (!line.startsWith('info ') || !line.includes(' score ')) return null;
   const parts = line.trim().split(/\s+/);
+  const out: Partial<InfoLine> = {};
   const mpv = parts.indexOf('multipv');
-  if (mpv > 0 && parts[mpv + 1] !== '1') return null;
-  const out: Partial<Evaluation> = {};
+  if (mpv > 0 && parts[mpv + 1] !== '1') {
+    if (!allowMultiPv) return null;
+    out.multipv = Number(parts[mpv + 1]);
+  }
   const d = parts.indexOf('depth');
   if (d > 0) out.depth = Number(parts[d + 1]);
   const s = parts.indexOf('score');

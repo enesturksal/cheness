@@ -2,6 +2,7 @@ node_modules
 dist
 dev-dist
 coverage
+smoke-shots
 *.tsbuildinfo
 .venv
 __pycache__

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { TopBar } from './components/TopBar';
+import { startAnalysisController } from './engine/analysisController';
 import { useBot } from './engine/useBot';
 import { startExplorerController } from './explorer/controller';
 import { completeLoginFromUrl, fetchUsername } from './explorer/lichessAuth';
@@ -21,6 +22,7 @@ export default function App() {
   }, [theme, lang]);
 
   useEffect(() => startExplorerController(), []);
+  useEffect(() => startAnalysisController(), []);
 
   // Finish a "Login with Lichess" round-trip, and backfill the username for pasted tokens.
   useEffect(() => {

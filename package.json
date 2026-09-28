@@ -19,7 +19,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "fetch-engine": "node scripts/fetch-engine.mjs",
-    "build:openings": "python tools/build_openings.py"
+    "build:openings": "python tools/build_openings.py",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "@lichess-org/chessground": "^10.4.0",
@@ -40,6 +41,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.12.0",
+    "playwright-core": "^1.63.0",
     "prettier": "^3.9.9",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.0",

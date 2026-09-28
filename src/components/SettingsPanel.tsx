@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { ANALYSIS_DEPTHS } from '../engine/analysis';
 import { LEVELS, type LevelId } from '../engine/difficulty';
 import { bookMeta } from '../explorer/book';
 import { fetchUsername, looksLikeToken, revokeToken, startLogin } from '../explorer/lichessAuth';
 import { ALL_SPEEDS, RATING_BUCKETS, type RatingBucket, type Speed } from '../explorer/types';
-import { LANGS, type Lang } from '../i18n/strings';
+import { LANGS, type Lang, type StringKey } from '../i18n/strings';
 import { useT } from '../i18n/useT';
 import { useStore } from '../store/useStore';
 
@@ -220,6 +221,22 @@ export function SettingsPanel() {
           checked={s.autoQueen}
           onChange={(v) => set({ autoQueen: v })}
         />
+      </Section>
+
+      <Section title={t('analysis.label')}>
+        <div className="flex flex-wrap gap-1.5">
+          {ANALYSIS_DEPTHS.map((d) => (
+            <button
+              key={d.depth}
+              type="button"
+              className={`chip ${s.analysisDepth === d.depth ? 'chip-on' : ''}`}
+              onClick={() => set({ analysisDepth: d.depth })}
+            >
+              {t(d.key as StringKey)}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted">{t('analysis.hint')}</p>
       </Section>
 
       <Section title={t('lichess.section')}>

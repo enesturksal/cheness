@@ -1,0 +1,4 @@
+# Normalise line endings so Windows and CI produce identical checkouts.
+* text=auto eol=lf
+*.png binary
+*.wasm binary

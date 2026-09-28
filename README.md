@@ -7,9 +7,9 @@ variation each continuation leads to. Take over the opponent's moves whenever yo
 steer the game into the line you are studying, and browse **every named opening and
 variation** (3,800+ from the Lichess opening database) offline.
 
-| Play (desktop)                                         | Library (mobile)                                        | Variation detail (mobile)                                     |
-| ------------------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------- |
-| ![Play view](docs/screenshots/play-desktop.png)        | ![Library](docs/screenshots/library-mobile.png)         | ![Variation detail](docs/screenshots/library-entry-mobile.png) |
+| Play (desktop)                                  | Library (mobile)                                | Variation detail (mobile)                                      |
+| ----------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
+| ![Play view](docs/screenshots/play-desktop.png) | ![Library](docs/screenshots/library-mobile.png) | ![Variation detail](docs/screenshots/library-entry-mobile.png) |
 
 _Screenshots are taken from an automated headless-Chrome run without a Lichess login, so the
 explorer panel shows the offline book; log in to see the Lichess statistics._
@@ -22,6 +22,11 @@ explorer panel shows the offline book; log in to see the Lichess statistics._
 - **Bot** — Stockfish 19 (lite, single-threaded WASM) in a Web Worker. Six difficulty levels
   (`Skill Level` + `movetime`/`depth`), changeable at any time; the new level applies to the
   bot's next move. Runs offline; no SharedArrayBuffer / COOP-COEP headers needed.
+- **Move analysis** — a second, full-strength Stockfish instance grades every move
+  (Book / Best / Great / Excellent / Good / Inaccuracy / Mistake / Blunder) from the
+  win-probability it gives away, using Lichess's published thresholds, and shows the engine's
+  preferred move after a mistake. Badges in the move list, verdict + eval bar under the
+  board; depth is configurable (or off).
 - **Live opening panel (tutor)** — after every move: ECO code + opening + variation
   ("out of book" sticks to the last known name), popular continuations from the Lichess
   Opening Explorer (Lichess pool with rating/time-control filters, or the Masters database),
@@ -83,7 +88,11 @@ npm test             # vitest
 npm run lint
 npm run build        # tsc -b && vite build -> dist/
 npm run preview
+npm run smoke -- http://localhost:5173/   # headless-Chrome end-to-end check (needs Chrome installed)
 ```
+
+`npm run smoke` drives the running app (moves by click and touch, bot reply, move analysis,
+opening panel, library, practice mode) and writes screenshots to `smoke-shots/`.
 
 ### Regenerating the opening book / icons (Python venv)
 
@@ -138,9 +147,8 @@ Current files (Stockfish 19.0.0, lite single-thread):
 
 ## Roadmap
 
-- Move quality feedback (best / good / inaccuracy / mistake / blunder) from a second engine
-  instance, chess.com-style.
-- Screenshots and a demo GIF in this README.
+- "Brilliant" detection (sacrifices) and per-game accuracy score.
+- A demo GIF in this README.
 - Repertoire saving and spaced-repetition drills.
 - Import games from Lichess / Chess.com accounts.
 - Notation and puzzle modes.
