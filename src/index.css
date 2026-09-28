@@ -1,0 +1,189 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Theme tokens: light values on :root, dark overrides on .dark (default). */
+:root {
+  --bg: #f3efe6;
+  --bg-2: #ffffff;
+  --bg-3: #e9e4d8;
+  --fg: #1b1a17;
+  --muted: #6d6857;
+  --line: #d8d2c4;
+  --accent: #5b8f1f;
+  --accent-fg: #ffffff;
+  --danger: #b3382b;
+  --bar-white: #f4f4f4;
+  --bar-draw: #a8a8a8;
+  --bar-black: #3a3a3a;
+  --bar-white-fg: #222;
+  --bar-black-fg: #eee;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #161512;
+  --bg-2: #262421;
+  --bg-3: #302e2b;
+  --fg: #e8e4da;
+  --muted: #a39f95;
+  --line: #3d3a35;
+  --accent: #86b64b;
+  --accent-fg: #14170f;
+  --danger: #e06c5a;
+  --bar-white: #e9e9e9;
+  --bar-draw: #7d7d7d;
+  --bar-black: #2b2b2b;
+  --bar-white-fg: #222;
+  --bar-black-fg: #ddd;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg2: var(--bg-2);
+  --color-bg3: var(--bg-3);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-danger: var(--danger);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Noto Sans',
+    sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* chessground needs an explicitly sized wrapper */
+.board-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  user-select: none;
+  touch-action: none;
+}
+.board-wrap > .cg-wrap {
+  width: 100%;
+  height: 100%;
+}
+.cg-wrap coords {
+  font-size: 9px;
+}
+
+/* Shared control styles */
+.btn,
+.btn-icon {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-line bg-bg2 px-3 py-2 text-sm font-medium text-fg transition-colors select-none;
+}
+.btn:hover:not(:disabled),
+.btn-icon:hover:not(:disabled) {
+  background: var(--bg-3);
+}
+.btn:disabled,
+.btn-icon:disabled {
+  opacity: 0.45;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: transparent;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+.btn-icon {
+  padding-inline: 0.625rem;
+}
+.chip {
+  @apply inline-flex items-center rounded-full border border-line px-2.5 py-1 text-xs font-medium select-none;
+}
+.chip-on {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: transparent;
+}
+.seg {
+  @apply inline-flex overflow-hidden rounded-lg border border-line text-sm;
+}
+.seg > button {
+  @apply px-3 py-1.5 font-medium select-none;
+  background: var(--bg-2);
+}
+.seg > button + button {
+  border-left: 1px solid var(--line);
+}
+.seg > button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.card {
+  @apply rounded-xl border border-line bg-bg2;
+}
+.eco {
+  @apply inline-block rounded bg-bg3 px-1.5 py-0.5 font-mono text-[11px] font-semibold tracking-wide text-muted;
+}
+
+/* Outcome bar (white / draw / black), Lichess style */
+.wdl {
+  display: flex;
+  height: 18px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+  font-weight: 600;
+}
+.wdl > span {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.wdl .w {
+  background: var(--bar-white);
+  color: var(--bar-white-fg);
+}
+.wdl .d {
+  background: var(--bar-draw);
+  color: #111;
+}
+.wdl .b {
+  background: var(--bar-black);
+  color: var(--bar-black-fg);
+}
+
+.thinking-dot {
+  animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

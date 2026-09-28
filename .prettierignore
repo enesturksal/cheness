@@ -1,0 +1,8 @@
+dist
+dev-dist
+node_modules
+public/stockfish
+src/data/openings.json
+tools/chess-openings
+.venv
+package-lock.json
