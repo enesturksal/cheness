@@ -7,12 +7,21 @@ variation each continuation leads to. Take over the opponent's moves whenever yo
 steer the game into the line you are studying, and browse **every named opening and
 variation** (3,800+ from the Lichess opening database) offline.
 
-| Play (desktop)                                  | Library (mobile)                                | Variation detail (mobile)                                      |
-| ----------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
-| ![Play view](docs/screenshots/play-desktop.png) | ![Library](docs/screenshots/library-mobile.png) | ![Variation detail](docs/screenshots/library-entry-mobile.png) |
+Turkish user guide: [docs/kullanim.md](docs/kullanim.md).
 
-_Screenshots are taken from an automated headless-Chrome run without a Lichess login, so the
-explorer panel shows the offline book; log in to see the Lichess statistics._
+| Home                                      | Play (engine arrows, verdict)             | Openings                                          |
+| ----------------------------------------- | ----------------------------------------- | ------------------------------------------------- |
+| ![Home](docs/screenshots/home-mobile.png) | ![Play](docs/screenshots/play-mobile.png) | ![Openings](docs/screenshots/openings-mobile.png) |
+
+| Game report                                   | Theory tab                                    | Library detail                                        |
+| --------------------------------------------- | --------------------------------------------- | ----------------------------------------------------- |
+| ![Report](docs/screenshots/report-mobile.png) | ![Theory](docs/screenshots/theory-mobile.png) | ![Library](docs/screenshots/library-entry-mobile.png) |
+
+![Desktop](docs/screenshots/play-desktop.png)
+
+_Screenshots come from the automated headless-Chrome run (`npm run smoke`) against the live
+site, without a Lichess login; with a login the opening panel shows Lichess statistics and
+popularity arrows._
 
 ## Features
 
