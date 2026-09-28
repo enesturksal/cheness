@@ -192,7 +192,7 @@ export function OpeningPanel() {
             <button
               type="button"
               className="btn"
-              onClick={() => useStore.getState().setPanelTab('settings')}
+              onClick={() => useStore.getState().setView('profile')}
             >
               {t('lichess.tokenLabel')}
             </button>

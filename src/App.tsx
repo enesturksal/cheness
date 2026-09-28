@@ -10,6 +10,7 @@ import { LibraryPage } from './pages/LibraryPage';
 import { MyGamesPage } from './pages/MyGamesPage';
 import { OpeningsPage } from './pages/OpeningsPage';
 import { PlayPage } from './pages/PlayPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { useStore } from './store/useStore';
 
 export default function App() {
@@ -52,6 +53,7 @@ export default function App() {
         {view === 'library' && <LibraryPage />}
         {view === 'openings' && <OpeningsPage />}
         {view === 'games' && <MyGamesPage />}
+        {view === 'profile' && <ProfilePage />}
       </main>
     </div>
   );

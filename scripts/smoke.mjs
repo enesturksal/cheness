@@ -186,6 +186,14 @@ try {
 }
 await shot(page, '07b-my-games');
 
+// ---- Profile ----
+await page
+  .getByRole('button', { name: /^(Profil|Profile)$/ })
+  .first()
+  .click();
+await page.waitForSelector('text=/Lichess ile giriş yap|Log in with Lichess/');
+await shot(page, '07c-profile');
+
 // ---- Library ----
 await page
   .getByRole('button', { name: /^(Ana sayfa|Home)$/ })

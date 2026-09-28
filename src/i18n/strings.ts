@@ -206,6 +206,20 @@ export const strings = {
     'library.line': 'Line',
     'library.related': 'Variations in this family',
     'moves.empty': 'No moves yet',
+    'profile.title': 'Profile',
+    'profile.desc': 'Lichess sign-in, usernames, language and theme.',
+    'profile.intro':
+      'BookLine has no server: everything you enter here is stored only in this browser, on this device. Share the app link freely; each person signs in with their own account.',
+    'profile.usernames': 'Usernames for "My games"',
+    'profile.usernamesHint':
+      'Public games are fetched from Lichess (needs the Lichess sign-in above) and from the chess.com public API.',
+    'profile.share':
+      'Tip: install the app from the browser menu ("Add to Home Screen") to use it like a native app.',
+    'lichess.invalid': 'token rejected',
+    'lichess.revokeHint': 'You can revoke tokens any time at',
+    'lichess.securityNote':
+      'Never share a token or put it in a public place: it acts as your account. A token with no scopes is enough for BookLine.',
+    'settings.profileLink': 'Lichess sign-in and usernames are on the Profile page.',
   },
   tr: {
     appName: 'BookLine',
@@ -415,6 +429,20 @@ export const strings = {
     'library.line': 'Hat',
     'library.related': 'Bu ailedeki varyantlar',
     'moves.empty': 'Henüz hamle yok',
+    'profile.title': 'Profil',
+    'profile.desc': 'Lichess girişi, kullanıcı adları, dil ve tema.',
+    'profile.intro':
+      'BookLine’ın sunucusu yok: burada girdiğin her şey yalnızca bu tarayıcıda, bu cihazda saklanır. Uygulama linkini istediğin gibi paylaş; herkes kendi hesabıyla giriş yapar.',
+    'profile.usernames': '"Oyunlarım" için kullanıcı adları',
+    'profile.usernamesHint':
+      'Lichess oyunları yukarıdaki Lichess girişiyle, chess.com oyunları herkese açık API ile çekilir.',
+    'profile.share':
+      'İpucu: tarayıcı menüsünden "Ana ekrana ekle" diyerek uygulamayı yerel uygulama gibi kullanabilirsin.',
+    'lichess.invalid': 'token reddedildi',
+    'lichess.revokeHint': 'Token’ları istediğin zaman iptal edebilirsin:',
+    'lichess.securityNote':
+      'Token’ı kimseyle paylaşma, herkese açık bir yere koyma: hesabın adına işlem yapabilir. BookLine için yetkisiz (scope’suz) token yeterli.',
+    'settings.profileLink': 'Lichess girişi ve kullanıcı adları Profil sayfasında.',
   },
 } as const;
 

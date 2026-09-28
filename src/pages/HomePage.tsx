@@ -5,6 +5,7 @@ import {
   IconHistory,
   IconLibrary,
   IconPlay,
+  IconUserBig,
   IconUsers,
 } from '../components/Icons';
 import { LEVELS, type LevelId } from '../engine/difficulty';
@@ -64,6 +65,7 @@ export function HomePage() {
   const level = useStore((s) => s.level);
   const tutorEnabled = useStore((s) => s.tutorEnabled);
   const analysisDepth = useStore((s) => s.analysisDepth);
+  const lichessUser = useStore((s) => s.lichessUser);
   const newGame = useStore((s) => s.newGame);
   const loadGame = useStore((s) => s.loadGame);
   const setSettings = useStore((s) => s.setSettings);
@@ -224,6 +226,12 @@ export function HomePage() {
           title={t('home.games')}
           desc={t('home.gamesDesc')}
           onClick={() => setView('games')}
+        />
+        <Card
+          icon={<IconUserBig />}
+          title={t('profile.title')}
+          desc={lichessUser ? `Lichess: ${lichessUser}` : t('profile.desc')}
+          onClick={() => setView('profile')}
         />
       </div>
     </div>

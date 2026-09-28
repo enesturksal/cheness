@@ -1,7 +1,7 @@
 import type { StringKey } from '../i18n/strings';
 import { useT } from '../i18n/useT';
 import { useStore, type Mode } from '../store/useStore';
-import { IconHome, IconMoon, IconSun } from './Icons';
+import { IconHome, IconMoon, IconSun, IconUser } from './Icons';
 
 const MODE_KEY: Record<Mode, StringKey> = {
   bot: 'mode.bot',
@@ -16,6 +16,7 @@ export function TopBar() {
   const mode = useStore((s) => s.mode);
   const setView = useStore((s) => s.setView);
   const theme = useStore((s) => s.theme);
+  const lichessUser = useStore((s) => s.lichessUser);
   const setSettings = useStore((s) => s.setSettings);
 
   const title =
@@ -27,7 +28,9 @@ export function TopBar() {
           ? t('nav.openings')
           : view === 'games'
             ? t('home.games')
-            : null;
+            : view === 'profile'
+              ? t('profile.title')
+              : null;
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
@@ -53,6 +56,15 @@ export function TopBar() {
         </button>
         {title && <span className="chip ml-1 text-muted">{title}</span>}
         <div className="grow" />
+        <button
+          type="button"
+          className={`btn-icon ${view === 'profile' ? 'btn-primary' : ''}`}
+          aria-label={t('profile.title')}
+          title={lichessUser ?? t('profile.title')}
+          onClick={() => setView('profile')}
+        >
+          <IconUser />
+        </button>
         <button
           type="button"
           className="btn-icon"

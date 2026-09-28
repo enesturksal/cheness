@@ -40,7 +40,10 @@ explorer panel shows the offline book; log in to see the Lichess statistics._
   continuation on the bot's turn to play that move for the opponent once.
 - **Home screen & modes** — Play (choose side and level), Analyse (paste a PGN from Lichess /
   chess.com or a Lichess game link), Play with a friend (pass-and-play on one device, board
-  turns each move), Openings and Library.
+  turns each move), Openings, Library, My games and Profile.
+- **Profile** — Lichess sign-in (OAuth or personal token, validated against the account, with
+  ratings shown), usernames for game imports, language and theme; everything stays on the
+  device.
 - **Arrows** — the eye button draws the three most played continuations on the board, fading
   with popularity like Lichess; when there is no explorer data it draws the engine's top three
   moves instead (Lichess cloud evaluation when available, otherwise local Stockfish).
@@ -92,6 +95,21 @@ src/
 public/stockfish/  engine .js/.wasm + GPL notice
 tools/             Python data pipeline (chess-openings TSV -> openings.json), icon generator
 ```
+
+## Hosting model
+
+BookLine is a static site: HTML, JS, WASM and JSON files, nothing else. There is no server,
+no database and no Docker image. Any static host serves it; the repo ships a GitHub Pages
+workflow, so after `git push` the app lives at a fixed HTTPS URL that works on every device
+(phone, tablet, desktop) whether or not your own computer is on. On a phone, "Add to Home
+Screen" installs it as a PWA. All personal data (Lichess token, usernames, settings, the
+current game) is stored in that device's browser only; sharing the URL with others is safe,
+each person signs in with their own Lichess account on the Profile page.
+
+**Tokens**: the Lichess Opening Explorer and game export need a Lichess token. Create one with
+_no scopes_ at <https://lichess.org/account/oauth/token>, paste it on the Profile page (or use
+"Log in with Lichess" on the HTTPS site). Never commit a token to the repository or bake it into
+the build: anything shipped to browsers is public.
 
 ## Development
 

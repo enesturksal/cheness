@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { ANALYSIS_DEPTHS } from '../engine/analysis';
 import { LEVELS, type LevelId } from '../engine/difficulty';
 import { bookMeta } from '../explorer/book';
-import { fetchUsername, looksLikeToken, revokeToken, startLogin } from '../explorer/lichessAuth';
 import { ALL_SPEEDS, RATING_BUCKETS, type RatingBucket, type Speed } from '../explorer/types';
 import { LANGS, type Lang, type StringKey } from '../i18n/strings';
 import { useT } from '../i18n/useT';
@@ -49,83 +47,6 @@ function ratingLabel(r: RatingBucket): string {
   const next = RATING_BUCKETS[i + 1];
   if (r === 0) return `<${next}`;
   return next ? `${r}–${next - 1}` : `${r}+`;
-}
-
-function LichessAccount() {
-  const t = useT();
-  const token = useStore((s) => s.lichessToken);
-  const user = useStore((s) => s.lichessUser);
-  const set = useStore((s) => s.setSettings);
-  const [draft, setDraft] = useState('');
-
-  const saveToken = async () => {
-    const value = draft.trim();
-    if (!looksLikeToken(value)) return;
-    set({ lichessToken: value, lichessUser: null });
-    setDraft('');
-    const username = await fetchUsername(value);
-    if (username) set({ lichessUser: username });
-  };
-
-  const logout = async () => {
-    if (token) void revokeToken(token);
-    set({ lichessToken: null, lichessUser: null });
-  };
-
-  if (token) {
-    return (
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span>
-          {t('lichess.loggedInAs')} <strong>{user ?? '…'}</strong>
-        </span>
-        <button type="button" className="btn" onClick={() => void logout()}>
-          {t('lichess.logout')}
-        </button>
-      </div>
-    );
-  }
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="text-xs text-muted">{t('lichess.required')}</p>
-      <div>
-        <button type="button" className="btn btn-primary" onClick={() => void startLogin()}>
-          {t('lichess.login')}
-        </button>
-      </div>
-      <label className="text-xs text-muted">
-        {t('lichess.tokenLabel')}
-        <span className="block">{t('lichess.howTo')}</span>
-      </label>
-      <div>
-        <a
-          className="btn"
-          href="https://lichess.org/account/oauth/token/create?description=BookLine"
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t('lichess.openTokenPage')}
-        </a>
-      </div>
-      <div className="flex gap-2">
-        <input
-          type="password"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="lip_…"
-          autoComplete="off"
-          className="min-w-0 flex-1 rounded-lg border border-line bg-bg2 px-2 py-1.5 text-sm"
-        />
-        <button
-          type="button"
-          className="btn"
-          disabled={!looksLikeToken(draft)}
-          onClick={() => void saveToken()}
-        >
-          {t('lichess.tokenSave')}
-        </button>
-      </div>
-    </div>
-  );
 }
 
 const SPEED_LABEL: Record<Speed, string> = {
@@ -262,7 +183,20 @@ export function SettingsPanel() {
       </Section>
 
       <Section title={t('lichess.section')}>
-        <LichessAccount />
+        <p className="text-sm">
+          {s.lichessUser ? (
+            <>
+              {t('lichess.loggedInAs')} <strong>{s.lichessUser}</strong>
+            </>
+          ) : (
+            t('settings.profileLink')
+          )}
+        </p>
+        <div>
+          <button type="button" className="btn" onClick={() => s.setView('profile')}>
+            {t('profile.title')}
+          </button>
+        </div>
       </Section>
 
       <Section title={t('explorer.ratings')}>
@@ -334,7 +268,7 @@ export function SettingsPanel() {
           BookLine · Stockfish 19 (lite, single-thread WASM, GPL-3.0) · chessground (GPL-3.0) ·
           chess.js (BSD-2) · Opening names: lichess-org/chess-openings (CC0, {bookMeta().count}{' '}
           {t('library.openings')}, {bookMeta().generatedAt}) · Statistics: Lichess Opening Explorer
-          · Deep evaluations: Lichess cloud eval.
+          · Deep evaluations: Lichess cloud eval, ChessDB · Theory: Wikibooks (CC BY-SA).
         </p>
       </Section>
     </div>

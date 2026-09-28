@@ -109,6 +109,38 @@ export async function completeLoginFromUrl(): Promise<LichessSession | null> {
   return { token: json.access_token, username };
 }
 
+export interface LichessAccountInfo {
+  username: string;
+  /** Rating per time control, e.g. { blitz: 1241, rapid: 1385 }. */
+  perfs: Record<string, number>;
+}
+
+/** Account name and ratings for a token; null when the token is invalid or the request fails. */
+export async function fetchAccount(
+  token: string,
+  signal?: AbortSignal,
+): Promise<LichessAccountInfo | null> {
+  try {
+    const res = await fetch(`${LICHESS}/api/account`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      signal,
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      username?: string;
+      perfs?: Record<string, { rating?: number }>;
+    };
+    if (!json.username) return null;
+    const perfs: Record<string, number> = {};
+    for (const [k, v] of Object.entries(json.perfs ?? {})) {
+      if (v && typeof v.rating === 'number') perfs[k] = v.rating;
+    }
+    return { username: json.username, perfs };
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchUsername(token: string): Promise<string | null> {
   try {
     const res = await fetch(`${LICHESS}/api/account`, {

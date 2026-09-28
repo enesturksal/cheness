@@ -228,7 +228,6 @@ function FamilyRow({ f }: { f: Family }) {
 export function OpeningsPage() {
   const t = useT();
   const token = useStore((s) => s.lichessToken);
-  const setPanelTab = useStore((s) => s.setPanelTab);
   const setView = useStore((s) => s.setView);
   const [query, setQuery] = useState('');
   const [showAll, setShowAll] = useState(false);
@@ -259,14 +258,7 @@ export function OpeningsPage() {
             <button type="button" className="btn btn-primary" onClick={() => void startLogin()}>
               {t('lichess.login')}
             </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => {
-                setPanelTab('settings');
-                setView('play');
-              }}
-            >
+            <button type="button" className="btn" onClick={() => setView('profile')}>
               {t('lichess.tokenLabel')}
             </button>
           </div>

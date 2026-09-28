@@ -22,7 +22,7 @@ import {
  */
 export type Mode = 'bot' | 'friends' | 'explore' | 'analysis';
 export type Theme = 'dark' | 'light';
-export type View = 'home' | 'play' | 'library' | 'openings' | 'games';
+export type View = 'home' | 'play' | 'library' | 'openings' | 'games' | 'profile';
 export type PanelTab = 'opening' | 'literature' | 'moves' | 'report' | 'settings';
 export type EngineStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type ExplorerStatus =

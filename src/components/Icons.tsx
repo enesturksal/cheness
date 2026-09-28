@@ -108,6 +108,18 @@ export const IconBook = () => (
     <path d="M4 19a2 2 0 0 1 2-2h13M8 7h7" />
   </svg>
 );
+export const IconUser = () => (
+  <svg {...base}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21a8 8 0 0 1 16 0" />
+  </svg>
+);
+export const IconUserBig = () => (
+  <svg {...big}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21a8 8 0 0 1 16 0" />
+  </svg>
+);
 export const IconHistory = () => (
   <svg {...big}>
     <circle cx="12" cy="12" r="9" />
