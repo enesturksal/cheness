@@ -1,3 +1,4 @@
+import { AppFooter } from '../components/AppFooter';
 import { LichessAccount } from '../components/LichessAccount';
 import { LANGS, type Lang } from '../i18n/strings';
 import { useT } from '../i18n/useT';
@@ -100,6 +101,7 @@ export function ProfilePage() {
       </Section>
 
       <p className="text-xs text-muted">{t('profile.share')}</p>
+      <AppFooter />
     </div>
   );
 }

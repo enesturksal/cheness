@@ -343,16 +343,20 @@ export function OpeningPanel() {
       {showSuggestions && (
         <div className="space-y-0.5">
           <h3 className="px-2 text-xs font-semibold tracking-wide text-muted uppercase">
+            {t('arrows.engine')} ·{' '}
             {suggestions.source === 'cloud'
               ? t('arrows.cloud')
               : suggestions.source === 'chessdb'
                 ? t('arrows.chessdb')
-                : t('arrows.engine')}
+                : 'Stockfish'}
             {suggestions.depth ? ` · d${suggestions.depth}` : ''}
           </h3>
-          {suggestions.lines.map((l) => {
+          <p className="px-2 pb-1 text-[11px] text-muted">{t('arrows.engineHint')}</p>
+          {suggestions.lines.map((l, i) => {
             const white = turn === 'white' ? l.score : negateScore(l.score);
-            const lead = nameAfter(l.uci);
+            const lead = [i === 0 ? t('arrows.best') : null, nameAfter(l.uci)]
+              .filter(Boolean)
+              .join(' · ');
             return (
               <Row
                 key={l.uci}

@@ -65,8 +65,8 @@ function EntryDetail({ entry, onSelect }: { entry: BookEntry; onSelect: (e: Book
   const related = (family?.entries ?? []).filter((e) => e !== entry).slice(0, 60);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 p-2 md:flex-row md:items-start md:p-4">
-      <div className="w-full shrink-0 md:w-[min(48vw,calc(100dvh-9rem))]">
+    <div className="mx-auto flex w-full max-w-[88rem] flex-col gap-3 p-2 md:flex-row md:items-start md:p-4">
+      <div className="w-full shrink-0 md:w-[min(48vw,calc(100dvh-11rem),44rem)]">
         <div className="mx-auto w-full max-w-[min(100%,calc(100dvh-24rem))] md:max-w-none">
           <Board
             fen={fen}

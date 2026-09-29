@@ -113,6 +113,12 @@ body {
 .btn-icon {
   padding-inline: 0.625rem;
 }
+/* Primary call to action (e.g. "Start" on the home screen) */
+.btn-cta {
+  padding: 0.7rem 1.4rem;
+  font-size: 1rem;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+}
 .chip {
   @apply inline-flex items-center rounded-full border border-line px-2.5 py-1 text-xs font-medium select-none;
 }

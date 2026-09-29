@@ -1,3 +1,4 @@
+import { AppFooter } from '../components/AppFooter';
 import { bookMeta } from '../explorer/book';
 import { useT } from '../i18n/useT';
 import { useStore } from '../store/useStore';
@@ -114,6 +115,7 @@ export function SourcesPage() {
           )}
         </section>
       ))}
+      <AppFooter />
     </div>
   );
 }

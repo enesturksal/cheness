@@ -235,6 +235,13 @@ export const strings = {
     'home.moves': 'moves',
     'sources.title': 'Data sources',
     'sources.desc': 'Where every number, name and verdict in Cheness comes from.',
+    'arrows.engineHint':
+      'No games for this position in the selected pool, so these are engine evaluations after each move, from White’s point of view (higher is better for White).',
+    'arrows.best': 'best',
+    'footer.by': 'Developed by',
+    'footer.rights': 'Source code:',
+    'footer.independent':
+      'Cheness is an independent project, not affiliated with Lichess, chess.com, Wikibooks or ChessDB. Opening names CC0 (lichess-org/chess-openings), theory CC BY-SA (Wikibooks), engine GPL-3.0 (Stockfish).',
   },
   tr: {
     appName: 'Cheness',
@@ -473,6 +480,13 @@ export const strings = {
     'home.moves': 'hamle',
     'sources.title': 'Veri kaynakları',
     'sources.desc': 'Cheness’teki her sayının, ismin ve notun nereden geldiği.',
+    'arrows.engineHint':
+      'Seçili havuzda bu pozisyon için oyun yok; bunlar motor değerlendirmeleri: her hamleden sonraki değer, Beyaz açısından (yüksek = Beyaz için iyi).',
+    'arrows.best': 'en iyi',
+    'footer.by': 'Geliştiren',
+    'footer.rights': 'Kaynak kodu:',
+    'footer.independent':
+      'Cheness bağımsız bir projedir; Lichess, chess.com, Wikibooks veya ChessDB ile bağlantılı değildir. Açılış adları CC0 (lichess-org/chess-openings), teori CC BY-SA (Wikibooks), motor GPL-3.0 (Stockfish).',
   },
 } as const;
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AppFooter } from '../components/AppFooter';
 import {
   IconBook,
   IconChart,
@@ -29,14 +30,19 @@ function Card({
   desc,
   children,
   onClick,
+  onIconClick,
 }: {
   icon: React.ReactNode;
   title: string;
   desc: string;
   children?: React.ReactNode;
   onClick?: () => void;
+  /** Makes the icon itself a start button (only for cards that are not buttons). */
+  onIconClick?: () => void;
 }) {
   const Tag = onClick ? 'button' : 'div';
+  const iconClass =
+    'flex size-11 shrink-0 items-center justify-center rounded-xl bg-bg3 text-accent';
   return (
     <Tag
       type={onClick ? 'button' : undefined}
@@ -44,9 +50,18 @@ function Card({
       className={`card flex flex-col gap-3 p-4 text-left ${onClick ? 'hover:bg-bg3' : ''}`}
     >
       <div className="flex items-center gap-3">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-bg3 text-accent">
-          {icon}
-        </span>
+        {onIconClick && !onClick ? (
+          <button
+            type="button"
+            className={`${iconClass} hover:bg-accent hover:text-accent-fg`}
+            onClick={onIconClick}
+            aria-label={title}
+          >
+            {icon}
+          </button>
+        ) : (
+          <span className={iconClass}>{icon}</span>
+        )}
         <div className="min-w-0">
           <h2 className="text-base font-bold">{title}</h2>
           <p className="text-xs text-muted">{desc}</p>
@@ -140,7 +155,12 @@ export function HomePage() {
       )}
 
       <div className="grid gap-3 md:grid-cols-2">
-        <Card icon={<IconPlay />} title={t('home.play')} desc={t('home.playDesc')}>
+        <Card
+          icon={<IconPlay />}
+          title={t('home.play')}
+          desc={t('home.playDesc')}
+          onIconClick={() => newGame({ mode: 'bot', playerColor: side })}
+        >
           <div className="flex flex-wrap items-center gap-2">
             <div className="seg">
               {(['white', 'black', 'random'] as const).map((c) => (
@@ -165,9 +185,10 @@ export function HomePage() {
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-primary btn-cta"
               onClick={() => newGame({ mode: 'bot', playerColor: side })}
             >
+              <IconPlay />
               {t('home.start')}
             </button>
             <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
@@ -296,13 +317,7 @@ export function HomePage() {
         </section>
       )}
 
-      <button
-        type="button"
-        className="self-start text-xs text-muted underline"
-        onClick={() => setView('sources')}
-      >
-        {t('sources.title')}
-      </button>
+      <AppFooter />
     </div>
   );
 }

@@ -130,8 +130,10 @@ export function PlayPage() {
   return (
     // The board column never scrolls away on phones: the panel below it scrolls on its own
     // (the page only scrolls when the screen is too short for both).
-    <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-2 p-2 md:flex-row md:items-stretch md:gap-4 md:p-4">
-      <div className="w-full shrink-0 md:w-[min(56vw,calc(100dvh-9rem))]">
+    // On desktop the board is capped (55vw, viewport height, 50rem) so the panel always keeps
+    // a usable width whatever the monitor size or browser zoom.
+    <div className="mx-auto flex h-full w-full max-w-[88rem] flex-col gap-2 p-2 md:flex-row md:items-stretch md:gap-4 md:p-4">
+      <div className="w-full shrink-0 md:w-[min(55vw,calc(100dvh-11rem),50rem)]">
         <div className="mx-auto w-full max-w-[min(100%,calc(100dvh-26rem))] md:max-w-none">
           <MaterialRow color={top} label={labelFor(top)} />
           <Board
@@ -152,7 +154,7 @@ export function PlayPage() {
         <Controls />
       </div>
 
-      <div className="card flex min-h-[200px] min-w-0 flex-1 flex-col md:min-h-0 safe-bottom">
+      <div className="card flex min-h-[200px] min-w-0 flex-1 flex-col md:min-h-0 md:min-w-[22rem] safe-bottom">
         <div className="flex border-b border-line">
           {TABS.map((tab) => (
             <button

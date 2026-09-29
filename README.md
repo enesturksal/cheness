@@ -222,6 +222,12 @@ Current files (Stockfish 19.0.0, lite single-thread):
   (CC BY-SA 4.0), [ChessDB](https://www.chessdb.cn/), the
   [chess.com public API](https://www.chess.com/news/view/published-data-api)
 
+## Author
+
+Developed by **Mustafa Enes Türksal** · cheness.app@gmail.com · live at
+<https://enesturksal.github.io/cheness/>. Cheness is an independent project and is not
+affiliated with Lichess, chess.com, Wikibooks or ChessDB.
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).
