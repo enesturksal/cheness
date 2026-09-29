@@ -108,6 +108,12 @@ export const IconBook = () => (
     <path d="M4 19a2 2 0 0 1 2-2h13M8 7h7" />
   </svg>
 );
+export const IconBar = () => (
+  <svg {...base}>
+    <rect x="9" y="3" width="6" height="18" rx="1.5" />
+    <path d="M9 12h6" />
+  </svg>
+);
 export const IconUser = () => (
   <svg {...base}>
     <circle cx="12" cy="8" r="4" />
@@ -124,6 +130,12 @@ export const IconHistory = () => (
   <svg {...big}>
     <circle cx="12" cy="12" r="9" />
     <path d="M12 7v5l3 2" />
+  </svg>
+);
+export const IconGraduation = () => (
+  <svg {...big}>
+    <path d="M2 9l10-5 10 5-10 5z" />
+    <path d="M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5M22 9v6" />
   </svg>
 );
 export const IconLibrary = () => (

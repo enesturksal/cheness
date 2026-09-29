@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { formatScore, negateScore, type MoveAnnotation } from '../engine/analysis';
+import { formatScore, type MoveAnnotation } from '../engine/analysis';
 import { formatCount, movePercent, outcomePercents, total } from '../explorer/api';
 import {
   bookContinuations,
@@ -351,12 +351,14 @@ export function OpeningPanel() {
                 : 'Stockfish'}
             {suggestions.depth ? ` · d${suggestions.depth}` : ''}
           </h3>
-          <p className="px-2 pb-1 text-[11px] text-muted">{t('arrows.engineHint')}</p>
+          <p className="px-2 pb-1 text-[11px] text-muted">
+            {t('arrows.engineHint')}{' '}
+            <strong>
+              ({mode === 'bot' && humanTurn ? t('arrows.forYou') : t('arrows.forMover')})
+            </strong>
+          </p>
           {suggestions.lines.map((l, i) => {
-            const white = turn === 'white' ? l.score : negateScore(l.score);
-            const lead = [i === 0 ? t('arrows.best') : null, nameAfter(l.uci)]
-              .filter(Boolean)
-              .join(' · ');
+            const lead = nameAfter(l.uci);
             return (
               <Row
                 key={l.uci}
@@ -368,9 +370,10 @@ export function OpeningPanel() {
                 onLongPress={onLongPress}
               >
                 <span className="w-11 shrink-0 text-right text-xs tabular-nums text-muted">
-                  {formatScore(white)}
+                  {formatScore(l.score)}
                 </span>
-                <div className="min-w-0 flex-1 truncate text-[11px] text-muted">
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-[11px] text-muted">
+                  {i === 0 && <span className="chip chip-on">{t('arrows.best')}</span>}
                   {lead ? `→ ${lead}` : ''}
                 </div>
               </Row>

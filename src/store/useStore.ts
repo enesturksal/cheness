@@ -5,6 +5,7 @@ import type { AnalysisDepth, MoveAnnotation, Score } from '../engine/analysis';
 import { DEFAULT_LEVEL, type LevelId } from '../engine/difficulty';
 import { openingForLine } from '../explorer/book';
 import { detectLang, type Lang } from '../i18n/strings';
+import type { Study, StudyRef } from '../studies/lichessStudy';
 import {
   DEFAULT_RATINGS,
   DEFAULT_SPEEDS,
@@ -21,10 +22,13 @@ import {
  * - explore: both sides by hand with the tutor (opening study)
  * - analysis: reviewing an imported game
  */
-export type Mode = 'bot' | 'friends' | 'explore' | 'analysis';
+export type Mode = 'bot' | 'friends' | 'explore' | 'analysis' | 'study';
+/** Which arrows to draw: popular DB moves (green), engine lines (blue), both, or none. */
+export type ArrowMode = 'off' | 'popular' | 'engine' | 'both';
 export type Theme = 'dark' | 'light';
-export type View = 'home' | 'play' | 'library' | 'openings' | 'games' | 'profile' | 'sources';
-export type PanelTab = 'opening' | 'literature' | 'moves' | 'report' | 'settings';
+export type View =
+  'home' | 'play' | 'library' | 'openings' | 'games' | 'profile' | 'sources' | 'studies';
+export type PanelTab = 'lesson' | 'opening' | 'literature' | 'moves' | 'report' | 'settings';
 export type EngineStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type ExplorerStatus =
   | 'idle'
@@ -90,8 +94,9 @@ export interface Settings {
   level: LevelId;
   tutorEnabled: boolean;
   showOpponentHints: boolean;
-  /** Draw the top continuations (or engine suggestions) as arrows on the board. */
-  showArrows: boolean;
+  arrowMode: ArrowMode;
+  /** chess.com-style vertical evaluation bar next to the board. */
+  showEvalBar: boolean;
   /** Pass-and-play: turn the board towards the side to move. */
   autoFlip: boolean;
   explorerDb: ExplorerDb;
@@ -124,6 +129,8 @@ export interface LoadGameOptions {
   meta?: GameMeta;
   /** Where to place the cursor; defaults to the end of the line. */
   ply?: number;
+  /** Start position when the line does not begin from the initial position. */
+  startFen?: string;
 }
 
 export interface StoreState extends Settings {
@@ -151,6 +158,10 @@ export interface StoreState extends Settings {
   savedGames: SavedGame[];
   /** Id of the saved entry that mirrors the current game. */
   currentSavedId: string | null;
+  /** The Lichess study being followed (mode "study") and its current chapter. */
+  study: Study | null;
+  studyChapter: number;
+  recentStudies: StudyRef[];
 
   playUci: (uci: string) => boolean;
   undo: () => void;
@@ -160,6 +171,8 @@ export interface StoreState extends Settings {
   loadGame: (uciMoves: string[], opts: LoadGameOptions) => boolean;
   resumeSaved: (id: string) => boolean;
   deleteSaved: (id: string) => void;
+  /** Open a study at a chapter (cursor at `ply`, default the start of the chapter's line). */
+  openStudy: (study: Study, chapter: number, ply?: number) => boolean;
   flipBoard: () => void;
   setPreview: (uci: string | null) => void;
   setSettings: (s: Partial<Settings>) => void;
@@ -181,7 +194,8 @@ const defaultSettings: Settings = {
   level: DEFAULT_LEVEL,
   tutorEnabled: true,
   showOpponentHints: false,
-  showArrows: true,
+  arrowMode: 'popular',
+  showEvalBar: true,
   autoFlip: true,
   explorerDb: 'lichess',
   ratings: DEFAULT_RATINGS,
@@ -257,6 +271,9 @@ export const useStore = create<StoreState>()(
       libraryEntry: null,
       savedGames: [],
       currentSavedId: null,
+      study: null,
+      studyChapter: 0,
+      recentStudies: [],
 
       playUci: (uci) => {
         const s = get();
@@ -318,7 +335,7 @@ export const useStore = create<StoreState>()(
         }),
 
       loadGame: (uciMoves, opts) => {
-        const game = G.gameFromUciLine(uciMoves);
+        const game = G.gameFromUciLine(uciMoves, opts.startFen);
         if (!game) return false;
         set((s) => {
           const color = opts.playerColor ?? (opts.mode === 'bot' ? s.playerColor : 'white');
@@ -376,6 +393,29 @@ export const useStore = create<StoreState>()(
           currentSavedId: s.currentSavedId === id ? null : s.currentSavedId,
         })),
 
+      openStudy: (study, chapter, ply) => {
+        const ch = study.chapters[chapter];
+        if (!ch) return false;
+        const ok = get().loadGame(ch.moves, {
+          mode: 'study',
+          ply: ply ?? 0,
+          playerColor: 'white',
+          startFen: ch.startFen ?? undefined,
+          meta: { event: study.name, site: ch.url },
+        });
+        if (!ok) return false;
+        set((s) => ({
+          study,
+          studyChapter: chapter,
+          panelTab: 'lesson',
+          recentStudies: [
+            { id: study.id, name: study.name, author: study.author },
+            ...s.recentStudies.filter((r) => r.id !== study.id),
+          ].slice(0, 20),
+        }));
+        return true;
+      },
+
       flipBoard: () => set((s) => ({ orientation: G.opposite(s.orientation) })),
       setPreview: (uci) => set({ previewUci: uci }),
       setSettings: (partial) => set(partial),
@@ -401,15 +441,22 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: 'cheness',
-      version: 3,
+      version: 4,
       // Keep whatever was stored across versions; new fields fall back to defaults.
-      migrate: (persisted) => persisted as StoreState,
+      migrate: (persisted) => {
+        const p = persisted as Partial<StoreState> & { showArrows?: boolean };
+        if (p.arrowMode === undefined && p.showArrows !== undefined) {
+          p.arrowMode = p.showArrows ? 'popular' : 'off';
+        }
+        return p as StoreState;
+      },
       partialize: (s) => ({
         playerColor: s.playerColor,
         level: s.level,
         tutorEnabled: s.tutorEnabled,
         showOpponentHints: s.showOpponentHints,
-        showArrows: s.showArrows,
+        arrowMode: s.arrowMode,
+        showEvalBar: s.showEvalBar,
         autoFlip: s.autoFlip,
         explorerDb: s.explorerDb,
         ratings: s.ratings,
@@ -429,6 +476,9 @@ export const useStore = create<StoreState>()(
         orientation: s.orientation,
         savedGames: s.savedGames,
         currentSavedId: s.currentSavedId,
+        study: s.study,
+        studyChapter: s.studyChapter,
+        recentStudies: s.recentStudies,
       }),
     },
   ),

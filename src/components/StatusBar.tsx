@@ -1,13 +1,5 @@
 import { useMemo } from 'react';
-import {
-  formatScore,
-  glyph,
-  KIND_LABEL_KEY,
-  negateScore,
-  scoreWinPercent,
-  type MoveAnnotation,
-  type Score,
-} from '../engine/analysis';
+import { glyph, KIND_LABEL_KEY, type MoveAnnotation } from '../engine/analysis';
 import { openingForLine } from '../explorer/book';
 import { currentFen, movetext, statusOf, turnOf, type MoveRecord } from '../game/game';
 import { useT } from '../i18n/useT';
@@ -94,18 +86,9 @@ export function StatusBar() {
   }
   if (mode === 'bot') rows.sort((a, b) => Number(b.mine) - Number(a.mine));
 
-  // Eval of the viewed position from White's side.
   const lastMove = game.ply > 0 ? game.moves[game.ply - 1] : null;
   const lastAnn =
     lastMove && annotations[game.ply - 1]?.uci === lastMove.uci ? annotations[game.ply - 1] : null;
-  let whiteScore: Score | null = null;
-  if (lastAnn && lastMove)
-    whiteScore = lastMove.color === 'white' ? lastAnn.after : negateScore(lastAnn.after);
-  else if (game.ply === 0 && annotations[0] && game.moves[0]) {
-    whiteScore =
-      game.moves[0].color === 'white' ? annotations[0].before : negateScore(annotations[0].before);
-  }
-  const whitePct = whiteScore ? scoreWinPercent(whiteScore) : null;
   const analysing = analysisDepth > 0 && lastMove && !lastAnn && !status.over;
 
   return (
@@ -143,14 +126,8 @@ export function StatusBar() {
         </div>
       </div>
 
-      {analysisDepth > 0 && (rows.length > 0 || whitePct !== null) && (
+      {analysisDepth > 0 && rows.length > 0 && (
         <div className="mt-1.5 flex items-start gap-2 text-xs">
-          {whitePct !== null && whiteScore && (
-            <div className="evalbar mt-0.5" title={formatScore(whiteScore)}>
-              <div className="evalbar-white" style={{ width: `${whitePct}%` }} />
-              <span className="evalbar-label">{formatScore(whiteScore)}</span>
-            </div>
-          )}
           <div className="min-w-0 flex-1 space-y-0.5">
             {rows.map((r) => (
               <div key={r.move.uci + r.who} className="flex min-w-0 items-center gap-1.5">

@@ -32,7 +32,8 @@ export function startSuggestionController(): () => void {
 
   const wanted = (): boolean => {
     const s = store.getState();
-    if (!s.showArrows) return false;
+    // Needed for arrows and for the panel's engine block; never on the bot's turn unless asked.
+    if (s.arrowMode === 'off' && !s.tutorEnabled) return false;
     return humanToMove(s) || s.showOpponentHints;
   };
 
@@ -121,7 +122,8 @@ export function startSuggestionController(): () => void {
   const unsubscribe = store.subscribe((s, prev) => {
     if (
       s.game !== prev.game ||
-      s.showArrows !== prev.showArrows ||
+      s.arrowMode !== prev.arrowMode ||
+      s.tutorEnabled !== prev.tutorEnabled ||
       s.mode !== prev.mode ||
       s.takeover !== prev.takeover ||
       s.playerColor !== prev.playerColor ||

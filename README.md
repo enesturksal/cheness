@@ -49,13 +49,22 @@ popularity arrows._
   continuation on the bot's turn to play that move for the opponent once.
 - **Home screen & modes** — Play (choose side and level), Analyse (paste a PGN from Lichess /
   chess.com or a Lichess game link), Play with a friend (pass-and-play on one device, board
-  turns each move), Openings, Library, My games and Profile.
+  turns each move), Lessons, Openings, Library, My games and Profile.
 - **Profile** — Lichess sign-in (OAuth or personal token, validated against the account, with
   ratings shown), usernames for game imports, language and theme; everything stays on the
   device.
-- **Arrows** — the eye button draws the three most played continuations on the board, fading
-  with popularity like Lichess; when there is no explorer data it draws the engine's top three
-  moves instead (Lichess cloud evaluation when available, otherwise local Stockfish).
+- **Arrows** — the eye button cycles through arrow modes: green arrows are the three most
+  played continuations (fading with popularity, with their share as a label), blue arrows are
+  the engine's top three moves labelled with the evaluation after the move from the mover's
+  point of view (Lichess cloud evaluation, then ChessDB, then local Stockfish). Engine
+  suggestions are always full strength, independent of the bot level.
+- **Evaluation bar** — a chess.com-style vertical bar beside the board (toggle in the controls
+  or Settings), fed by the same evaluations as the move verdicts; it dims while the position is
+  still being evaluated.
+- **Lessons** — any public Lichess study opens as a step-by-step lesson: chapters, the
+  author's note for each position, their arrows and highlighted squares on the board, and a
+  "next move" button; leave the line to try your own idea and jump back. A curated list of
+  popular opening studies is built in, and any study link or id can be pasted.
 - **Openings screen** — the most played openings for White and for Black (with live Lichess
   shares when logged in), each with Practice / Explore / all variations.
 - **Game review aids** — captured pieces and the point balance next to each player

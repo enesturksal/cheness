@@ -12,6 +12,7 @@ import { OpeningsPage } from './pages/OpeningsPage';
 import { PlayPage } from './pages/PlayPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SourcesPage } from './pages/SourcesPage';
+import { StudiesPage } from './pages/StudiesPage';
 import { startHistorySync } from './store/history';
 import { useStore } from './store/useStore';
 
@@ -58,6 +59,7 @@ export default function App() {
         {view === 'games' && <MyGamesPage />}
         {view === 'profile' && <ProfilePage />}
         {view === 'sources' && <SourcesPage />}
+        {view === 'studies' && <StudiesPage />}
       </main>
     </div>
   );

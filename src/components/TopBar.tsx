@@ -9,6 +9,7 @@ const MODE_KEY: Record<Mode, StringKey> = {
   friends: 'mode.friends',
   explore: 'mode.explore',
   analysis: 'mode.analysis',
+  study: 'mode.study',
 };
 
 export function TopBar() {
@@ -33,7 +34,9 @@ export function TopBar() {
               ? t('profile.title')
               : view === 'sources'
                 ? t('sources.title')
-                : null;
+                : view === 'studies'
+                  ? t('home.studies')
+                  : null;
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">

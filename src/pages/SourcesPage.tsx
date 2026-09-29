@@ -37,6 +37,11 @@ function content(lang: 'tr' | 'en', bookCount: number, bookDate: string): Item[]
         link: { href: 'https://lichess.org/api#tag/Analysis', label: 'Lichess cloud eval' },
       },
       {
+        title: 'Dersler',
+        body: 'Lichess çalışmaları (study): kullanıcıların lichess.org’da yayımladığı herkese açık dersler. Uygulama, çalışmayı bölüm bölüm PGN olarak Lichess API’sinden anlık alır; yazarın yorumları pozisyona bağlı not, [%cal]/[%csl] işaretleri tahtada ok ve kare olarak gösterilir. İçerik yazarlarına aittir, her derste yazar ve Lichess bağlantısı görünür; uygulama içeriği depolayıp dağıtmaz (yalnızca cihazda önbellek).',
+        link: { href: 'https://lichess.org/study', label: 'Lichess studies' },
+      },
+      {
         title: 'Oyunlarım',
         body: 'Lichess: hesabının oyun arşivi (Lichess girişi gerekir). chess.com: herkese açık "published data API"; oyunlar aylık arşivlerden PGN olarak okunur. Açılış adları platformların kendi verdiği adlardır.',
       },
@@ -74,6 +79,11 @@ function content(lang: 'tr' | 'en', bookCount: number, bookDate: string): Item[]
       title: 'Evaluations and move verdicts',
       body: 'Three sources, in order: (1) Lichess cloud evaluations: Stockfish results for positions Lichess has analysed before, typically depth 30–75, no login needed. (2) ChessDB (chessdb.cn): engine scores for billions of positions, used for arrow suggestions. (3) Stockfish 19 lite (WASM) on your device for everything else, at the depth set in Settings. Verdicts follow win-probability loss (Lichess thresholds: inaccuracy ≥5, mistake ≥10, blunder ≥15 points); "Great" requires the engine\'s second choice to be ≥10 points worse. Both positions of a move are always scored by the same source. Accuracy uses Lichess\'s formula.',
       link: { href: 'https://lichess.org/api#tag/Analysis', label: 'Lichess cloud eval' },
+    },
+    {
+      title: 'Lessons',
+      body: 'Lichess studies: public lessons published by users on lichess.org. The app fetches a study chapter by chapter as PGN from the Lichess API; the author’s comments become position-bound notes and [%cal]/[%csl] tags become arrows and squares on the board. Content belongs to its authors, every lesson shows the author and a link to Lichess; the app does not store or redistribute it (device cache only).',
+      link: { href: 'https://lichess.org/study', label: 'Lichess studies' },
     },
     {
       title: 'My games',

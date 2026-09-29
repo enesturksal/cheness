@@ -70,10 +70,14 @@ console.log('arrows on board:', await page.locator('.cg-shapes g').count());
 await shot(page, '02-bot-replied');
 
 try {
-  await page.waitForSelector('.evalbar', { timeout: 90000 });
+  await page.waitForSelector('.kind', { timeout: 90000 });
   await page.waitForTimeout(500);
-  const line = (await page.locator('.evalbar').locator('..').innerText()).replace(/\n/g, ' ');
-  console.log('analysis:', line);
+  console.log(
+    'analysis rows:',
+    await page.locator('.kind').count(),
+    'eval bar:',
+    await page.locator('.evalbar').count(),
+  );
   await tab(page, /^(Hamleler|Moves)$/);
   await page.waitForTimeout(300);
   console.log('badges in move list:', await page.locator('.kind').count());
@@ -161,6 +165,34 @@ const familyRows = await page.locator('button:has(span.eco)').count();
 console.log('openings page rows:', familyRows);
 if (familyRows < 40) fail('openings page shows too few families');
 await shot(page, '07-openings');
+
+// ---- Lessons (Lichess study) ----
+await page
+  .getByRole('button', { name: /^(Ana sayfa|Home)$/ })
+  .first()
+  .click();
+await page
+  .getByRole('button', { name: /^(Dersler|Lessons)/ })
+  .first()
+  .click();
+await page.waitForSelector('text=/Tuzaklar ve gambitler|Traps and gambits/');
+await shot(page, '07a-studies');
+await page.locator('input').fill('https://lichess.org/study/jsSks17H');
+await page
+  .getByRole('button', { name: /^(Aç|Open)$/ })
+  .first()
+  .click();
+try {
+  await page.waitForSelector('text=/Sonraki hamle|Next move/', { timeout: 60000 });
+  await page.getByRole('button', { name: /Sonraki hamle|Next move/ }).click();
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: /Sonraki hamle|Next move/ }).click();
+  await page.waitForTimeout(300);
+  console.log('lesson chapter opened, two lesson moves played: ok');
+} catch (e) {
+  fail('lesson did not open: ' + e.message);
+}
+await shot(page, '07a-lesson');
 
 // ---- My games (chess.com public API) ----
 await page

@@ -3,6 +3,7 @@ import { AppFooter } from '../components/AppFooter';
 import {
   IconBook,
   IconChart,
+  IconGraduation,
   IconHistory,
   IconLibrary,
   IconPlay,
@@ -22,6 +23,7 @@ const MODE_KEY: Record<Mode, StringKey> = {
   friends: 'mode.friends',
   explore: 'mode.explore',
   analysis: 'mode.analysis',
+  study: 'mode.study',
 };
 
 function Card({
@@ -238,6 +240,12 @@ export function HomePage() {
           </div>
         </Card>
 
+        <Card
+          icon={<IconGraduation />}
+          title={t('home.studies')}
+          desc={t('home.studiesDesc')}
+          onClick={() => setView('studies')}
+        />
         <Card
           icon={<IconBook />}
           title={t('home.openings')}

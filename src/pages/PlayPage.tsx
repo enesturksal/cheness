@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import type { DrawShape } from '@lichess-org/chessground/draw';
 import { Board } from '../components/Board';
 import { Controls } from '../components/Controls';
+import { EvalBar } from '../components/EvalBar';
+import { LessonPanel } from '../components/LessonPanel';
+import { posKey } from '../studies/lichessStudy';
 import { LiteraturePanel } from '../components/LiteraturePanel';
 import { MaterialRow } from '../components/MaterialRow';
 import { MoveList } from '../components/MoveList';
@@ -9,7 +12,7 @@ import { OpeningPanel } from '../components/OpeningPanel';
 import { ReportPanel } from '../components/ReportPanel';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { StatusBar } from '../components/StatusBar';
-import { formatScore, negateScore } from '../engine/analysis';
+import { formatScore, negateScore, type Score } from '../engine/analysis';
 import { movePercent } from '../explorer/api';
 import { explorerQueryFor } from '../explorer/query';
 import {
@@ -45,10 +48,15 @@ export function PlayPage() {
   const panelTab = useStore((s) => s.panelTab);
   const setPanelTab = useStore((s) => s.setPanelTab);
   const playUci = useStore((s) => s.playUci);
-  const showArrows = useStore((s) => s.showArrows);
+  const arrowMode = useStore((s) => s.arrowMode);
+  const showEvalBar = useStore((s) => s.showEvalBar);
+  const analysisDepth = useStore((s) => s.analysisDepth);
+  const annotations = useStore((s) => s.annotations);
   const explorer = useStore((s) => s.explorer);
   const explorerKey = useStore((s) => explorerQueryFor(s).key);
   const suggestions = useStore((s) => s.suggestions);
+  const study = useStore((s) => s.study);
+  const studyChapter = useStore((s) => s.studyChapter);
 
   const fen = currentFen(game);
   const turn = turnOf(fen);
@@ -61,29 +69,43 @@ export function PlayPage() {
 
   const autoShapes = useMemo<DrawShape[]>(() => {
     const shapes: DrawShape[] = [];
-    if (showArrows && !status.over) {
-      const data = explorer.key === explorerKey ? explorer.data : null;
-      if (data && data.moves.length) {
-        data.moves.slice(0, 3).forEach((m, i) => {
+    if (arrowMode !== 'off' && !status.over) {
+      const live = explorer.key === explorerKey;
+      const dbMoves = live && explorer.data?.moves.length ? explorer.data.moves : null;
+      const dbLoading = !live || explorer.status === 'loading';
+      const wantPopular = arrowMode === 'popular' || arrowMode === 'both';
+      // "popular" falls back to engine lines only once the database has definitely no games.
+      const wantEngine =
+        arrowMode === 'engine' ||
+        arrowMode === 'both' ||
+        (arrowMode === 'popular' && !dbMoves && !dbLoading);
+      const n = arrowMode === 'both' ? 2 : 3;
+      const drawn = new Set<string>();
+      if (wantPopular && dbMoves && explorer.data) {
+        dbMoves.slice(0, n).forEach((m, i) => {
           const { from, to } = parseUci(m.uci);
+          drawn.add(m.uci);
           shapes.push({
             orig: from,
             dest: to,
             brush: POP_BRUSH[i],
-            label: { text: `${Math.round(movePercent(m, data))}%` },
+            label: { text: `${Math.round(movePercent(m, explorer.data!))}%` },
           });
         });
-      } else if (suggestions.fen === fen && suggestions.status === 'ok') {
-        suggestions.lines.forEach((l, i) => {
-          const { from, to } = parseUci(l.uci);
-          const white = turn === 'white' ? l.score : negateScore(l.score);
-          shapes.push({
-            orig: from,
-            dest: to,
-            brush: ENG_BRUSH[i],
-            label: { text: formatScore(white) },
+      }
+      if (wantEngine && suggestions.fen === fen && suggestions.status === 'ok') {
+        suggestions.lines
+          .filter((l) => !drawn.has(l.uci))
+          .slice(0, n)
+          .forEach((l, i) => {
+            const { from, to } = parseUci(l.uci);
+            shapes.push({
+              orig: from,
+              dest: to,
+              brush: ENG_BRUSH[i],
+              label: { text: formatScore(l.score) },
+            });
           });
-        });
       }
       // The move actually played from here (when stepping through a game).
       if (playedUci) {
@@ -91,22 +113,58 @@ export function PlayPage() {
         shapes.push({ orig: from, dest: to, brush: 'played' });
       }
     }
+    // The study author's own arrows and highlighted squares for this position.
+    if (mode === 'study' && study) {
+      const own = study.chapters[studyChapter]?.shapes[posKey(fen)];
+      if (own) shapes.push(...own);
+    }
     if (previewUci) {
       const { from, to } = parseUci(previewUci);
       shapes.push({ orig: from, dest: to, brush: 'yellow' });
     }
     return shapes;
   }, [
-    showArrows,
+    arrowMode,
     status.over,
     explorer,
     explorerKey,
     suggestions,
     fen,
-    turn,
     previewUci,
     playedUci,
+    mode,
+    study,
+    studyChapter,
   ]);
+
+  // Evaluation of the viewed position from White's side, taken from the move verdicts:
+  // the previous move's "after" score, else the next move's "before" score (when reviewing),
+  // else the nearest earlier evaluated position (shown dimmed while the engine catches up).
+  const evalAfterPly = (ply: number): Score | null => {
+    if (ply <= 0) return null;
+    const m = game.moves[ply - 1];
+    const a = annotations[ply - 1];
+    if (!a || a.uci !== m.uci) return null;
+    return m.color === 'white' ? a.after : negateScore(a.after);
+  };
+  let barScore: Score | null = evalAfterPly(game.ply);
+  if (!barScore && game.ply < game.moves.length) {
+    const m = game.moves[game.ply];
+    const a = annotations[game.ply];
+    if (a && a.uci === m.uci) barScore = m.color === 'white' ? a.before : negateScore(a.before);
+  }
+  if (!barScore && game.ply === 0) barScore = { cp: 0, mate: null };
+  if (status.over) {
+    barScore =
+      status.result === '1-0'
+        ? { cp: null, mate: 1 }
+        : status.result === '0-1'
+          ? { cp: null, mate: -1 }
+          : { cp: 0, mate: null };
+  }
+  const barPending = !barScore;
+  let shownScore = barScore;
+  for (let p = game.ply - 1; p >= 0 && !shownScore; p--) shownScore = evalAfterPly(p);
 
   const labelFor = (c: Color): string => {
     if (mode === 'bot') return c === playerColor ? t('status.you') : 'Stockfish';
@@ -119,7 +177,9 @@ export function PlayPage() {
   const top = opposite(orientation);
   const bottom = orientation;
 
+  const tabs: PanelTab[] = mode === 'study' ? ['lesson', ...TABS] : TABS;
   const tabLabel: Record<PanelTab, string> = {
+    lesson: t('tabs.lesson'),
     opening: t('tabs.opening'),
     literature: t('tabs.literature'),
     moves: t('tabs.moves'),
@@ -128,26 +188,31 @@ export function PlayPage() {
   };
 
   return (
-    // The board column never scrolls away on phones: the panel below it scrolls on its own
-    // (the page only scrolls when the screen is too short for both).
     // On desktop the board is capped (55vw, viewport height, 50rem) so the panel always keeps
     // a usable width whatever the monitor size or browser zoom.
     <div className="mx-auto flex h-full w-full max-w-[88rem] flex-col gap-2 p-2 md:flex-row md:items-stretch md:gap-4 md:p-4">
       <div className="w-full shrink-0 md:w-[min(55vw,calc(100dvh-11rem),50rem)]">
         <div className="mx-auto w-full max-w-[min(100%,calc(100dvh-26rem))] md:max-w-none">
           <MaterialRow color={top} label={labelFor(top)} />
-          <Board
-            fen={fen}
-            orientation={orientation}
-            turnColor={turn}
-            lastMove={lastMove}
-            check={status.check}
-            dests={dests}
-            movableColor={movableColor}
-            onMove={playUci}
-            autoShapes={autoShapes}
-            autoQueen={autoQueen}
-          />
+          <div className="flex items-stretch gap-1.5">
+            {showEvalBar && analysisDepth > 0 && (
+              <EvalBar score={shownScore} orientation={orientation} pending={barPending} />
+            )}
+            <div className="min-w-0 flex-1">
+              <Board
+                fen={fen}
+                orientation={orientation}
+                turnColor={turn}
+                lastMove={lastMove}
+                check={status.check}
+                dests={dests}
+                movableColor={movableColor}
+                onMove={playUci}
+                autoShapes={autoShapes}
+                autoQueen={autoQueen}
+              />
+            </div>
+          </div>
           <MaterialRow color={bottom} label={labelFor(bottom)} />
         </div>
         <StatusBar />
@@ -156,7 +221,7 @@ export function PlayPage() {
 
       <div className="card flex min-h-[200px] min-w-0 flex-1 flex-col md:min-h-0 md:min-w-[22rem] safe-bottom">
         <div className="flex border-b border-line">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab}
               type="button"
@@ -170,6 +235,7 @@ export function PlayPage() {
           ))}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
+          {panelTab === 'lesson' && (mode === 'study' ? <LessonPanel /> : <OpeningPanel />)}
           {panelTab === 'opening' && <OpeningPanel />}
           {panelTab === 'literature' && <LiteraturePanel />}
           {panelTab === 'moves' && <MoveList />}

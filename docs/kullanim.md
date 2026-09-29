@@ -30,15 +30,16 @@ Token'ı kimseyle paylaşma; hesabın adına işlem yapabilir.
 
 ## Ana ekran
 
-| Kart                 | Ne yapar                                                                                                                                |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **Oyna**             | Taraf (Beyaz/Siyah/Rastgele) ve zorluk seç, Stockfish'e karşı oyna. "Tutor açık" işaretliyse açılış paneli çalışır.                     |
-| **Analiz et**        | Lichess veya chess.com'dan kopyaladığın PGN'i ya da bir Lichess oyun linkini yapıştır; oyun hamle hamle notlanır, Rapor sekmesi açılır. |
-| **Arkadaşınla oyna** | Aynı cihazda sırayla; tahta her hamlede döner.                                                                                          |
-| **Açılışlar**        | Lichess'ten canlı ağaç (giriş gerekli), popüler açılışlar, kitaptaki 149 ailenin tamamı (arama var). Her hattan ♔ veya ♚ olarak çalış.  |
-| **Kütüphane**        | ECO cilt → aile → varyant: 3.815 adlandırılmış hat, tahtada adım adım.                                                                  |
-| **Oyunlarım**        | Lichess/chess.com'dan son oyunlarını çek, incele, açılış başına skor tablosu.                                                           |
-| **Profil**           | Giriş, kullanıcı adları, dil, tema.                                                                                                     |
+| Kart                 | Ne yapar                                                                                                                                                    |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Oyna**             | Taraf (Beyaz/Siyah/Rastgele) ve zorluk seç, Stockfish'e karşı oyna. "Tutor açık" işaretliyse açılış paneli çalışır.                                         |
+| **Analiz et**        | Lichess veya chess.com'dan kopyaladığın PGN'i ya da bir Lichess oyun linkini yapıştır; oyun hamle hamle notlanır, Rapor sekmesi açılır.                     |
+| **Arkadaşınla oyna** | Aynı cihazda sırayla; tahta her hamlede döner.                                                                                                              |
+| **Dersler**          | Lichess'teki herkese açık çalışmalar (study) adım adım ders olarak: yazarın notu, okları, "Sonraki hamle" düğmesi. Link/kimlik yapıştır ya da listeden seç. |
+| **Açılışlar**        | Lichess'ten canlı ağaç (giriş gerekli), popüler açılışlar, kitaptaki 149 ailenin tamamı (arama var). Her hattan ♔ veya ♚ olarak çalış.                      |
+| **Kütüphane**        | ECO cilt → aile → varyant: 3.815 adlandırılmış hat, tahtada adım adım.                                                                                      |
+| **Oyunlarım**        | Lichess/chess.com'dan son oyunlarını çek, incele, açılış başına skor tablosu.                                                                               |
+| **Profil**           | Giriş, kullanıcı adları, dil, tema.                                                                                                                         |
 
 ## Oyun ekranı
 
@@ -90,6 +91,29 @@ aileye, aileden listeye). Logo ana sayfaya götürür.
   baktığın pozisyona konumlanmış olarak açılır.
 - Panelin sağ üstündeki "i" düğmesi ve ana sayfadaki "Veri kaynakları" bağlantısı her verinin
   nereden geldiğini açıklar.
+
+## Dersler (Lichess çalışmaları)
+
+- Ana ekrandaki **Dersler** kartı, Lichess'te yayımlanmış herkese açık açılış derslerini listeler
+  (Sicilya, İtalyan, Londra, Caro-Kann, tuzaklar…). Herhangi bir Lichess çalışma linkini ya da
+  8 haneli kimliğini de yapıştırabilirsin; çalışma herkese açıksa giriş gerekmez.
+- Ders açılınca oyun ekranında **Ders** sekmesi gelir: bölüm seçici, o pozisyon için yazarın notu
+  ve **Sonraki hamle** düğmesi. Yazarın çizdiği oklar ve boyadığı kareler tahtada görünür.
+- Kendi hamleni denemek serbest: hattan ayrılınca "Derse dön" ile kaldığın yere dönersin.
+  Açılış paneli, motor notları ve değerlendirme çubuğu derste de çalışır.
+- İçerik yazarlarına aittir; her derste yazar adı ve Lichess bağlantısı vardır. Uygulama içeriği
+  yalnızca cihazında önbelleğe alır.
+
+## Değerlendirme çubuğu ve oklar
+
+- Tahtanın yanındaki dikey çubuk chess.com'daki gibi Beyaz'ın kazanma olasılığını gösterir;
+  hamle notlarıyla aynı motor kaynaklarını kullanır (Lichess bulut → ChessDB → cihazdaki
+  Stockfish). Pozisyon henüz değerlendirilmediyse soluk görünür. Kontrol satırındaki çubuk
+  düğmesi veya Ayarlar'dan kapatılır.
+- Göz düğmesi ok modunu döndürür: **popüler** (yeşil, oynanma sıklığı ve yüzdesi), **motor**
+  (mavi, hamle sonrası değerlendirme, hamleyi yapan taraf açısından), **ikisi**, **kapalı**.
+  Veri tabanında hiç oyun olmayan pozisyonlarda popüler mod motor oklarına düşer.
+- Motor önerileri bot seviyesinden bağımsızdır; her zaman tam güçtedir.
 
 ## Küçük ipuçları
 

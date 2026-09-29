@@ -63,6 +63,7 @@ const MODES: { mode: Mode; key: StringKey }[] = [
   { mode: 'explore', key: 'mode.explore' },
   { mode: 'friends', key: 'mode.friends' },
   { mode: 'analysis', key: 'mode.analysis' },
+  { mode: 'study', key: 'mode.study' },
 ];
 
 export function SettingsPanel() {
@@ -133,10 +134,24 @@ export function SettingsPanel() {
           checked={s.tutorEnabled}
           onChange={(v) => set({ tutorEnabled: v })}
         />
+        <div className="flex flex-wrap items-center gap-1.5 text-sm">
+          <span className="mr-1">{t('controls.arrows')}:</span>
+          {(['popular', 'engine', 'both', 'off'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              className={`chip ${s.arrowMode === m ? 'chip-on' : ''}`}
+              onClick={() => set({ arrowMode: m })}
+            >
+              {t(`arrows.mode.${m}` as StringKey)}
+            </button>
+          ))}
+        </div>
         <Toggle
-          label={t('controls.arrows')}
-          checked={s.showArrows}
-          onChange={(v) => set({ showArrows: v })}
+          label={t('evalbar.toggle')}
+          hint={t('evalbar.hint')}
+          checked={s.showEvalBar}
+          onChange={(v) => set({ showEvalBar: v })}
         />
         <Toggle
           label={t('tutor.opponentHints')}

@@ -1,7 +1,25 @@
 import { LEVELS, type LevelId } from '../engine/difficulty';
+import type { StringKey } from '../i18n/strings';
 import { useT } from '../i18n/useT';
-import { useStore } from '../store/useStore';
-import { IconEye, IconFirst, IconFlip, IconLast, IconNext, IconPlus, IconPrev } from './Icons';
+import { useStore, type ArrowMode } from '../store/useStore';
+import {
+  IconBar,
+  IconEye,
+  IconFirst,
+  IconFlip,
+  IconLast,
+  IconNext,
+  IconPlus,
+  IconPrev,
+} from './Icons';
+
+const ARROW_CYCLE: ArrowMode[] = ['popular', 'engine', 'both', 'off'];
+const ARROW_LABEL: Record<ArrowMode, StringKey> = {
+  popular: 'arrows.mode.popular',
+  engine: 'arrows.mode.engine',
+  both: 'arrows.mode.both',
+  off: 'arrows.mode.off',
+};
 
 export function Controls() {
   const t = useT();
@@ -15,9 +33,12 @@ export function Controls() {
   const takeover = useStore((s) => s.takeover);
   const setTakeover = useStore((s) => s.setTakeover);
   const level = useStore((s) => s.level);
-  const showArrows = useStore((s) => s.showArrows);
+  const arrowMode = useStore((s) => s.arrowMode);
+  const showEvalBar = useStore((s) => s.showEvalBar);
   const autoFlip = useStore((s) => s.autoFlip);
   const setSettings = useStore((s) => s.setSettings);
+
+  const nextArrowMode = ARROW_CYCLE[(ARROW_CYCLE.indexOf(arrowMode) + 1) % ARROW_CYCLE.length];
 
   return (
     <div className="flex flex-col gap-2">
@@ -69,13 +90,24 @@ export function Controls() {
         </button>
         <button
           type="button"
-          className={`btn-icon ${showArrows ? 'btn-primary' : ''}`}
-          aria-pressed={showArrows}
+          className={`btn-icon gap-1 ${arrowMode !== 'off' ? 'btn-primary' : ''}`}
+          aria-pressed={arrowMode !== 'off'}
           aria-label={t('controls.arrows')}
-          title={t('controls.arrows')}
-          onClick={() => setSettings({ showArrows: !showArrows })}
+          title={`${t('controls.arrows')}: ${t(ARROW_LABEL[arrowMode])} → ${t(ARROW_LABEL[nextArrowMode])}`}
+          onClick={() => setSettings({ arrowMode: nextArrowMode })}
         >
-          <IconEye off={!showArrows} />
+          <IconEye off={arrowMode === 'off'} />
+          <span className="text-[11px] font-semibold">{t(ARROW_LABEL[arrowMode])}</span>
+        </button>
+        <button
+          type="button"
+          className={`btn-icon ${showEvalBar ? 'btn-primary' : ''}`}
+          aria-pressed={showEvalBar}
+          aria-label={t('evalbar.toggle')}
+          title={t('evalbar.toggle')}
+          onClick={() => setSettings({ showEvalBar: !showEvalBar })}
+        >
+          <IconBar />
         </button>
         <div className="grow" />
         <button
@@ -89,6 +121,7 @@ export function Controls() {
           <span className="hidden sm:inline">{t('controls.newGame')}</span>
         </button>
       </div>
+      {arrowMode !== 'off' && <p className="text-[11px] text-muted">{t('arrows.legend')}</p>}
       {mode === 'bot' && (
         <div className="flex items-center gap-2">
           <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
