@@ -254,7 +254,10 @@ await desk.waitForSelector('cg-board', { timeout: 30000 });
 await desk.waitForTimeout(1000);
 await shot(desk, '12-desktop-play');
 
-const relevant = errors.filter((e) => !/api\.chess\.com|ERR_FAILED/.test(e));
+// chess.com's bot check and React's dev-only warning about chessground's <piece> element are noise.
+const relevant = errors.filter(
+  (e) => !/api\.chess\.com|ERR_FAILED|tag <(%s|piece)> is unrecognized/.test(e),
+);
 if (relevant.length) {
   console.log('console errors/warnings:\n' + relevant.join('\n'));
   fail('console reported errors');

@@ -74,7 +74,7 @@ export async function completeLoginFromUrl(): Promise<LichessSession | null> {
     url.searchParams.delete('code');
     url.searchParams.delete('state');
     url.searchParams.delete('error');
-    history.replaceState(null, '', url.pathname + url.search + url.hash);
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
   };
 
   const raw = sessionStorage.getItem(PKCE_KEY);

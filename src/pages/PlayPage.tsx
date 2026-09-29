@@ -3,6 +3,7 @@ import type { DrawShape } from '@lichess-org/chessground/draw';
 import { Board } from '../components/Board';
 import { Controls } from '../components/Controls';
 import { LiteraturePanel } from '../components/LiteraturePanel';
+import { MaterialRow } from '../components/MaterialRow';
 import { MoveList } from '../components/MoveList';
 import { OpeningPanel } from '../components/OpeningPanel';
 import { ReportPanel } from '../components/ReportPanel';
@@ -11,7 +12,16 @@ import { StatusBar } from '../components/StatusBar';
 import { formatScore, negateScore } from '../engine/analysis';
 import { movePercent } from '../explorer/api';
 import { explorerQueryFor } from '../explorer/query';
-import { currentFen, destsFor, lastMoveSquares, parseUci, statusOf, turnOf } from '../game/game';
+import {
+  currentFen,
+  destsFor,
+  lastMoveSquares,
+  opposite,
+  parseUci,
+  statusOf,
+  turnOf,
+  type Color,
+} from '../game/game';
 import { useT } from '../i18n/useT';
 import { useStore, type PanelTab } from '../store/useStore';
 
@@ -25,6 +35,7 @@ export function PlayPage() {
   const t = useT();
   const game = useStore((s) => s.game);
   const mode = useStore((s) => s.mode);
+  const meta = useStore((s) => s.meta);
   const storedOrientation = useStore((s) => s.orientation);
   const autoFlip = useStore((s) => s.autoFlip);
   const previewUci = useStore((s) => s.previewUci);
@@ -46,6 +57,7 @@ export function PlayPage() {
   const lastMove = useMemo(() => lastMoveSquares(game), [game]);
   const orientation = mode === 'friends' && autoFlip ? turn : storedOrientation;
   const movableColor = status.over ? undefined : mode !== 'bot' || takeover ? 'both' : playerColor;
+  const playedUci = game.ply < game.moves.length ? game.moves[game.ply].uci : null;
 
   const autoShapes = useMemo<DrawShape[]>(() => {
     const shapes: DrawShape[] = [];
@@ -73,13 +85,39 @@ export function PlayPage() {
           });
         });
       }
+      // The move actually played from here (when stepping through a game).
+      if (playedUci) {
+        const { from, to } = parseUci(playedUci);
+        shapes.push({ orig: from, dest: to, brush: 'played' });
+      }
     }
     if (previewUci) {
       const { from, to } = parseUci(previewUci);
       shapes.push({ orig: from, dest: to, brush: 'yellow' });
     }
     return shapes;
-  }, [showArrows, status.over, explorer, explorerKey, suggestions, fen, turn, previewUci]);
+  }, [
+    showArrows,
+    status.over,
+    explorer,
+    explorerKey,
+    suggestions,
+    fen,
+    turn,
+    previewUci,
+    playedUci,
+  ]);
+
+  const labelFor = (c: Color): string => {
+    if (mode === 'bot') return c === playerColor ? t('status.you') : 'Stockfish';
+    if (mode === 'analysis' && meta) {
+      const n = c === 'white' ? meta.white : meta.black;
+      if (n) return n;
+    }
+    return c === 'white' ? t('side.white') : t('side.black');
+  };
+  const top = opposite(orientation);
+  const bottom = orientation;
 
   const tabLabel: Record<PanelTab, string> = {
     opening: t('tabs.opening'),
@@ -94,7 +132,8 @@ export function PlayPage() {
     // (the page only scrolls when the screen is too short for both).
     <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-2 p-2 md:flex-row md:items-stretch md:gap-4 md:p-4">
       <div className="w-full shrink-0 md:w-[min(56vw,calc(100dvh-9rem))]">
-        <div className="mx-auto w-full max-w-[min(100%,calc(100dvh-24rem))] md:max-w-none">
+        <div className="mx-auto w-full max-w-[min(100%,calc(100dvh-26rem))] md:max-w-none">
+          <MaterialRow color={top} label={labelFor(top)} />
           <Board
             fen={fen}
             orientation={orientation}
@@ -107,6 +146,7 @@ export function PlayPage() {
             autoShapes={autoShapes}
             autoQueen={autoQueen}
           />
+          <MaterialRow color={bottom} label={labelFor(bottom)} />
         </div>
         <StatusBar />
         <Controls />

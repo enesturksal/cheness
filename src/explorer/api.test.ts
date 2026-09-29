@@ -18,7 +18,7 @@ describe('explorer api', () => {
     expect(url.searchParams.get('fen')).toBe(epd);
     expect(url.searchParams.get('ratings')).toBe('1000,1200');
     expect(url.searchParams.get('speeds')).toBe('blitz,rapid');
-    expect(url.searchParams.get('topGames')).toBe('0');
+    expect(url.searchParams.get('topGames')).toBe('4');
     expect(url.searchParams.get('recentGames')).toBe('0');
     expect(url.searchParams.get('moves')).toBe('12');
   });
@@ -34,7 +34,7 @@ describe('explorer api', () => {
     const a = queryKey({ db: 'lichess', epd, ratings: [1200, 1000], speeds: ['rapid', 'blitz'] });
     const b = queryKey({ db: 'lichess', epd, ratings: [1000, 1200], speeds: ['blitz', 'rapid'] });
     expect(a).toBe(b);
-    expect(queryKey({ db: 'masters', epd, ratings: [1000], speeds: [] })).toBe(`masters|${epd}`);
+    expect(queryKey({ db: 'masters', epd, ratings: [1000], speeds: [] })).toBe(`2|masters|${epd}`);
   });
 
   it('normalizes a response defensively', () => {
@@ -70,6 +70,22 @@ describe('explorer api', () => {
     expect(r.moves[1].opening?.name).toBe('Sicilian Defense');
     expect(r.moves[1].averageRating).toBeNull();
     expect(r.opening?.eco).toBe('B00');
+    expect(r.topGames).toEqual([]);
+    const withGames = normalize({
+      moves: [],
+      topGames: [
+        {
+          id: 'abc',
+          winner: 'white',
+          white: { name: 'Caruana', rating: 2820 },
+          black: { name: 'Carlsen', rating: 2835 },
+          year: 2018,
+          month: '2018-11',
+        },
+      ],
+    });
+    expect(withGames.topGames[0]).toMatchObject({ id: 'abc', winner: 'white', year: 2018 });
+    expect(withGames.topGames[0].black.rating).toBe(2835);
   });
 
   it('computes percentages', () => {

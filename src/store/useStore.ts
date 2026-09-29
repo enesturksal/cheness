@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import * as G from '../game/game';
 import type { AnalysisDepth, MoveAnnotation, Score } from '../engine/analysis';
 import { DEFAULT_LEVEL, type LevelId } from '../engine/difficulty';
+import { openingForLine } from '../explorer/book';
 import { detectLang, type Lang } from '../i18n/strings';
 import {
   DEFAULT_RATINGS,
@@ -22,7 +23,7 @@ import {
  */
 export type Mode = 'bot' | 'friends' | 'explore' | 'analysis';
 export type Theme = 'dark' | 'light';
-export type View = 'home' | 'play' | 'library' | 'openings' | 'games' | 'profile';
+export type View = 'home' | 'play' | 'library' | 'openings' | 'games' | 'profile' | 'sources';
 export type PanelTab = 'opening' | 'literature' | 'moves' | 'report' | 'settings';
 export type EngineStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type ExplorerStatus =
@@ -64,6 +65,24 @@ export interface GameMeta {
   result?: string;
   event?: string;
   site?: string;
+}
+
+/** A game kept on the device so it can be resumed or reviewed later. */
+export interface SavedGame {
+  id: string;
+  savedAt: number;
+  mode: Mode;
+  meta: GameMeta | null;
+  playerColor: G.Color;
+  moves: string[];
+  ply: number;
+  opening: string | null;
+  result: string | null;
+}
+
+export interface LibraryEntryRef {
+  epd: string;
+  name: string;
 }
 
 export interface Settings {
@@ -125,8 +144,13 @@ export interface StoreState extends Settings {
   suggestions: SuggestionState;
   /** Engine verdict per played move (index = ply - 1); null while pending. */
   annotations: (MoveAnnotation | null)[];
-  /** Family to open when the library is shown next (set by the Openings screen). */
+  /** Library navigation (kept in the store so the back button can restore it). */
   libraryFamily: string | null;
+  libraryEntry: LibraryEntryRef | null;
+  /** Games kept on this device, newest first. */
+  savedGames: SavedGame[];
+  /** Id of the saved entry that mirrors the current game. */
+  currentSavedId: string | null;
 
   playUci: (uci: string) => boolean;
   undo: () => void;
@@ -134,6 +158,8 @@ export interface StoreState extends Settings {
   goToPly: (ply: number) => void;
   newGame: (opts?: NewGameOptions) => void;
   loadGame: (uciMoves: string[], opts: LoadGameOptions) => boolean;
+  resumeSaved: (id: string) => boolean;
+  deleteSaved: (id: string) => void;
   flipBoard: () => void;
   setPreview: (uci: string | null) => void;
   setSettings: (s: Partial<Settings>) => void;
@@ -143,6 +169,7 @@ export interface StoreState extends Settings {
   setEngineStatus: (v: EngineStatus) => void;
   setView: (v: View) => void;
   openLibraryFamily: (family: string | null) => void;
+  setLibrary: (family: string | null, entry: LibraryEntryRef | null) => void;
   setPanelTab: (v: PanelTab) => void;
   setExplorer: (e: ExplorerState) => void;
   setSuggestions: (s: SuggestionState) => void;
@@ -178,9 +205,34 @@ const idleSuggestions: SuggestionState = {
   lines: [],
 };
 
+const SAVED_CAP = 100;
+
 function pickColor(c: G.Color | 'random' | undefined, fallback: G.Color): G.Color {
   if (c === 'random') return Math.random() < 0.5 ? 'white' : 'black';
   return c ?? fallback;
+}
+
+function newSavedId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+/** Mirror the current game into the saved list (newest first, capped). */
+function upsertSaved(s: StoreState, id: string): SavedGame[] {
+  const g = s.game;
+  if (g.moves.length === 0) return s.savedGames.filter((x) => x.id !== id);
+  const status = G.statusOf(G.fenAt(g, g.moves.length));
+  const entry: SavedGame = {
+    id,
+    savedAt: Date.now(),
+    mode: s.mode,
+    meta: s.meta,
+    playerColor: s.playerColor,
+    moves: g.moves.map((m) => m.uci),
+    ply: g.ply,
+    opening: openingForLine(g.moves, g.moves.length, g.startFen).opening?.name ?? null,
+    result: status.over ? (status.result ?? null) : (s.meta?.result ?? null),
+  };
+  return [entry, ...s.savedGames.filter((x) => x.id !== id)].slice(0, SAVED_CAP);
 }
 
 export const useStore = create<StoreState>()(
@@ -202,25 +254,33 @@ export const useStore = create<StoreState>()(
       suggestions: idleSuggestions,
       annotations: [],
       libraryFamily: null,
+      libraryEntry: null,
+      savedGames: [],
+      currentSavedId: null,
 
       playUci: (uci) => {
         const s = get();
         const next = G.applyUci(s.game, uci);
         if (!next) return false;
+        const id = s.currentSavedId ?? newSavedId();
         // Branching discards annotations of the moves that were cut off.
-        set({ game: next, previewUci: null, annotations: s.annotations.slice(0, s.game.ply) });
+        const partial = {
+          game: next,
+          previewUci: null,
+          annotations: s.annotations.slice(0, s.game.ply),
+          currentSavedId: id,
+        };
+        set({ ...partial, savedGames: upsertSaved({ ...s, ...partial }, id) });
         return true;
       },
 
+      // One ply at a time, so after the bot replies you can step back and see your own move's verdict.
       undo: () =>
-        set((s) => {
-          if (s.game.ply === 0) return {};
-          let ply = s.game.ply - 1;
-          // Against the bot, take back to the player's own turn (usually two plies).
-          const vsBot = s.mode === 'bot' && !s.takeover;
-          if (vsBot && ply > 0 && G.turnOf(G.fenAt(s.game, ply)) !== s.playerColor) ply -= 1;
-          return { game: { ...s.game, ply }, previewUci: null, botThinking: false };
-        }),
+        set((s) =>
+          s.game.ply > 0
+            ? { game: { ...s.game, ply: s.game.ply - 1 }, previewUci: null, botThinking: false }
+            : {},
+        ),
 
       redo: () =>
         set((s) =>
@@ -240,6 +300,8 @@ export const useStore = create<StoreState>()(
           const mode = opts?.mode ?? s.mode;
           const color = pickColor(opts?.playerColor, s.playerColor);
           return {
+            savedGames: s.currentSavedId ? upsertSaved(s, s.currentSavedId) : s.savedGames,
+            currentSavedId: newSavedId(),
             game: G.newGame(opts?.startFen),
             gameId: s.gameId + 1,
             mode,
@@ -261,7 +323,9 @@ export const useStore = create<StoreState>()(
         set((s) => {
           const color = opts.playerColor ?? (opts.mode === 'bot' ? s.playerColor : 'white');
           return {
-            game: { ...game, ply: opts.ply ?? game.moves.length },
+            savedGames: s.currentSavedId ? upsertSaved(s, s.currentSavedId) : s.savedGames,
+            currentSavedId: newSavedId(),
+            game: { ...game, ply: Math.min(opts.ply ?? game.moves.length, game.moves.length) },
             gameId: s.gameId + 1,
             mode: opts.mode,
             meta: opts.meta ?? null,
@@ -275,8 +339,42 @@ export const useStore = create<StoreState>()(
             panelTab: opts.mode === 'analysis' ? 'report' : 'opening',
           };
         });
+        // Imported games are worth keeping too.
+        const s = get();
+        if (s.currentSavedId) set({ savedGames: upsertSaved(s, s.currentSavedId) });
         return true;
       },
+
+      resumeSaved: (id) => {
+        const s = get();
+        const saved = s.savedGames.find((x) => x.id === id);
+        if (!saved) return false;
+        const game = G.gameFromUciLine(saved.moves);
+        if (!game) return false;
+        set({
+          savedGames: s.currentSavedId ? upsertSaved(s, s.currentSavedId) : s.savedGames,
+          currentSavedId: id,
+          game: { ...game, ply: Math.min(saved.ply, game.moves.length) },
+          gameId: s.gameId + 1,
+          mode: saved.mode,
+          meta: saved.meta,
+          playerColor: saved.playerColor,
+          orientation: saved.mode === 'bot' ? saved.playerColor : 'white',
+          takeover: false,
+          botThinking: false,
+          previewUci: null,
+          annotations: [],
+          view: 'play',
+          panelTab: saved.mode === 'analysis' ? 'report' : 'opening',
+        });
+        return true;
+      },
+
+      deleteSaved: (id) =>
+        set((s) => ({
+          savedGames: s.savedGames.filter((x) => x.id !== id),
+          currentSavedId: s.currentSavedId === id ? null : s.currentSavedId,
+        })),
 
       flipBoard: () => set((s) => ({ orientation: G.opposite(s.orientation) })),
       setPreview: (uci) => set({ previewUci: uci }),
@@ -287,7 +385,8 @@ export const useStore = create<StoreState>()(
       setEngineStatus: (v) => set({ engineStatus: v }),
       setView: (v) => set({ view: v, previewUci: null }),
       openLibraryFamily: (family) =>
-        set({ view: 'library', libraryFamily: family, previewUci: null }),
+        set({ view: 'library', libraryFamily: family, libraryEntry: null, previewUci: null }),
+      setLibrary: (family, entry) => set({ libraryFamily: family, libraryEntry: entry }),
       setPanelTab: (v) => set({ panelTab: v }),
       setExplorer: (e) => set({ explorer: e }),
       setSuggestions: (sg) => set({ suggestions: sg }),
@@ -302,7 +401,9 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: 'cheness',
-      version: 2,
+      version: 3,
+      // Keep whatever was stored across versions; new fields fall back to defaults.
+      migrate: (persisted) => persisted as StoreState,
       partialize: (s) => ({
         playerColor: s.playerColor,
         level: s.level,
@@ -326,6 +427,8 @@ export const useStore = create<StoreState>()(
         mode: s.mode,
         meta: s.meta,
         orientation: s.orientation,
+        savedGames: s.savedGames,
+        currentSavedId: s.currentSavedId,
       }),
     },
   ),

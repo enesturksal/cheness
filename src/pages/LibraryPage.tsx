@@ -12,6 +12,7 @@ import {
 import {
   familiesByVolume,
   familyOf,
+  findEntry,
   searchOpenings,
   VOLUMES,
   type BookEntry,
@@ -19,9 +20,10 @@ import {
   type Volume,
 } from '../explorer/book';
 import { fenAt, gameFromUciLine, lastMoveSquares, movetext, statusOf, turnOf } from '../game/game';
-import { useT } from '../i18n/useT';
-import { useStore } from '../store/useStore';
 import type { StringKey } from '../i18n/strings';
+import { useT } from '../i18n/useT';
+import { goBack } from '../store/history';
+import { useStore } from '../store/useStore';
 
 function EntryRow({
   e,
@@ -51,15 +53,7 @@ function EntryRow({
   );
 }
 
-function EntryDetail({
-  entry,
-  onBack,
-  onSelect,
-}: {
-  entry: BookEntry;
-  onBack: () => void;
-  onSelect: (e: BookEntry) => void;
-}) {
+function EntryDetail({ entry, onSelect }: { entry: BookEntry; onSelect: (e: BookEntry) => void }) {
   const t = useT();
   const loadGame = useStore((s) => s.loadGame);
   // The parent keys this component by entry, so state resets naturally per opening.
@@ -117,7 +111,7 @@ function EntryDetail({
         <button
           type="button"
           className="mb-2 flex items-center gap-1 text-sm text-muted"
-          onClick={onBack}
+          onClick={goBack}
         >
           <IconBack /> {t('library.back')}
         </button>
@@ -181,22 +175,14 @@ function EntryDetail({
   );
 }
 
-function FamilyView({
-  family,
-  onBack,
-  onSelect,
-}: {
-  family: Family;
-  onBack: () => void;
-  onSelect: (e: BookEntry) => void;
-}) {
+function FamilyView({ family, onSelect }: { family: Family; onSelect: (e: BookEntry) => void }) {
   const t = useT();
   return (
     <div className="mx-auto w-full max-w-3xl p-2 md:p-4">
       <button
         type="button"
         className="mb-2 flex items-center gap-1 text-sm text-muted"
-        onClick={onBack}
+        onClick={goBack}
       >
         <IconBack /> {t('library.back')}
       </button>
@@ -216,21 +202,22 @@ function FamilyView({
   );
 }
 
+/**
+ * ECO volumes -> families -> variations. The drill-down lives in the store so the browser's
+ * back button (and the top-bar arrow) steps back through it.
+ */
 export function LibraryPage() {
   const t = useT();
   const [query, setQuery] = useState('');
-  // The Openings screen can ask for a family to be opened directly.
-  const requested = useStore((s) => s.libraryFamily);
-  const openLibraryFamily = useStore((s) => s.openLibraryFamily);
-  const [family, setFamilyState] = useState<Family | null>(() =>
-    requested ? (familyOf(requested) ?? null) : null,
-  );
-  const setFamily = (f: Family | null) => {
-    if (requested) openLibraryFamily(null);
-    setFamilyState(f);
-  };
-  const [entry, setEntry] = useState<BookEntry | null>(null);
+  const familyName = useStore((s) => s.libraryFamily);
+  const entryRef = useStore((s) => s.libraryEntry);
+  const setLibrary = useStore((s) => s.setLibrary);
   const [open, setOpen] = useState<Set<Volume>>(() => new Set());
+
+  const family = familyName ? (familyOf(familyName) ?? null) : null;
+  const entry = entryRef ? (findEntry(entryRef.epd, entryRef.name) ?? null) : null;
+  const selectEntry = (e: BookEntry) =>
+    setLibrary(familyName ?? e.family, { epd: e.epd, name: e.name });
 
   const results = useMemo(
     () => (query.trim().length >= 2 ? searchOpenings(query, 150) : null),
@@ -238,17 +225,9 @@ export function LibraryPage() {
   );
 
   if (entry) {
-    return (
-      <EntryDetail
-        key={entry.epd + entry.name}
-        entry={entry}
-        onBack={() => setEntry(null)}
-        onSelect={setEntry}
-      />
-    );
+    return <EntryDetail key={entry.epd + entry.name} entry={entry} onSelect={selectEntry} />;
   }
-  if (family)
-    return <FamilyView family={family} onBack={() => setFamily(null)} onSelect={setEntry} />;
+  if (family) return <FamilyView family={family} onSelect={selectEntry} />;
 
   const toggle = (v: Volume) =>
     setOpen((prev) => {
@@ -280,7 +259,7 @@ export function LibraryPage() {
             <p className="p-3 text-sm text-muted">{t('library.noResults')}</p>
           )}
           {results.map((e) => (
-            <EntryRow key={e.epd + e.name} e={e} onSelect={setEntry} showFamily />
+            <EntryRow key={e.epd + e.name} e={e} onSelect={selectEntry} showFamily />
           ))}
         </div>
       ) : (
@@ -313,7 +292,7 @@ export function LibraryPage() {
                       <button
                         key={f.name}
                         type="button"
-                        onClick={() => setFamily(f)}
+                        onClick={() => setLibrary(f.name, null)}
                         className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-bg3"
                       >
                         <span className="eco shrink-0">{f.ecoRange}</span>

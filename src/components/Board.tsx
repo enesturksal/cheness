@@ -22,6 +22,7 @@ const BRUSHES: DrawBrushes = {
   eng1: { key: 'eng1', color: '#0f5fd6', opacity: 0.9, lineWidth: 11 },
   eng2: { key: 'eng2', color: '#0f5fd6', opacity: 0.5, lineWidth: 9 },
   eng3: { key: 'eng3', color: '#0f5fd6', opacity: 0.28, lineWidth: 8 },
+  played: { key: 'played', color: '#e8590c', opacity: 0.85, lineWidth: 9 },
 };
 
 export interface BoardProps {

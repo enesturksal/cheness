@@ -66,8 +66,12 @@ export function HomePage() {
   const tutorEnabled = useStore((s) => s.tutorEnabled);
   const analysisDepth = useStore((s) => s.analysisDepth);
   const lichessUser = useStore((s) => s.lichessUser);
+  const savedGames = useStore((s) => s.savedGames);
+  const currentSavedId = useStore((s) => s.currentSavedId);
   const newGame = useStore((s) => s.newGame);
   const loadGame = useStore((s) => s.loadGame);
+  const resumeSaved = useStore((s) => s.resumeSaved);
+  const deleteSaved = useStore((s) => s.deleteSaved);
   const setSettings = useStore((s) => s.setSettings);
   const setView = useStore((s) => s.setView);
 
@@ -75,6 +79,7 @@ export function HomePage() {
   const [pgn, setPgn] = useState('');
   const [pgnError, setPgnError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [showAllSaved, setShowAllSaved] = useState(false);
 
   const current = useMemo(() => openingForLine(game.moves, game.ply, game.startFen), [game]);
 
@@ -112,6 +117,9 @@ export function HomePage() {
       setImporting(false);
     }
   };
+
+  const others = savedGames.filter((g) => g.id !== currentSavedId);
+  const shownSaved = showAllSaved ? others : others.slice(0, 5);
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 p-3 md:p-6">
@@ -234,6 +242,67 @@ export function HomePage() {
           onClick={() => setView('profile')}
         />
       </div>
+
+      {others.length > 0 && (
+        <section className="card p-1">
+          <h3 className="px-2 pt-2 text-xs font-semibold tracking-wide text-muted uppercase">
+            {t('home.recent')}
+          </h3>
+          {shownSaved.map((g) => (
+            <div
+              key={g.id}
+              className="flex items-center gap-2 border-t border-line px-2 py-2 text-sm"
+            >
+              <span className="chip shrink-0 text-muted">{t(MODE_KEY[g.mode])}</span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate">
+                  {g.opening ?? '—'}
+                  {g.meta?.white || g.meta?.black
+                    ? ` · ${g.meta.white ?? '?'} – ${g.meta.black ?? '?'}`
+                    : ''}
+                </div>
+                <div className="truncate text-xs text-muted">
+                  {new Date(g.savedAt).toLocaleString()} · {g.moves.length} {t('home.moves')}
+                  {g.result ? ` · ${g.result}` : ''}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn px-2.5 py-1.5 text-xs"
+                onClick={() => resumeSaved(g.id)}
+              >
+                {t('home.resume')}
+              </button>
+              <button
+                type="button"
+                className="btn-icon px-2 text-muted"
+                aria-label={t('home.delete')}
+                title={t('home.delete')}
+                onClick={() => deleteSaved(g.id)}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          {others.length > 5 && !showAllSaved && (
+            <button
+              type="button"
+              className="w-full border-t border-line py-2 text-xs text-accent"
+              onClick={() => setShowAllSaved(true)}
+            >
+              +{others.length - 5}
+            </button>
+          )}
+        </section>
+      )}
+
+      <button
+        type="button"
+        className="self-start text-xs text-muted underline"
+        onClick={() => setView('sources')}
+      >
+        {t('sources.title')}
+      </button>
     </div>
   );
 }

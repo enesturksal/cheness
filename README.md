@@ -58,6 +58,14 @@ popularity arrows._
   moves instead (Lichess cloud evaluation when available, otherwise local Stockfish).
 - **Openings screen** — the most played openings for White and for Black (with live Lichess
   shares when logged in), each with Practice / Explore / all variations.
+- **Game review aids** — captured pieces and the point balance next to each player
+  (chess.com style); verdicts for both your last move and the opponent's; undo steps one ply so
+  you can look at your own move; when stepping through a game the move actually played is
+  marked in the opening panel next to what the literature plays (and drawn as an orange arrow).
+- **Reference games** — the explorer's top games for the position (master games with ratings
+  and year, or Lichess games); "Open" loads the full game into analysis mode at that position.
+- **Saved games** — every game with moves is kept on the device; resume any of them from the
+  home screen. Browser/Android back and the top-bar arrow step back one screen.
 - **Theory tab** — human-written opening theory for the current line from Wikibooks'
   _Chess Opening Theory_ (CC BY-SA, English), falling back to the nearest covered parent line.
 - **My games** — pull your recent games from Lichess or chess.com (public APIs), review any

@@ -216,3 +216,8 @@ export function familiesByVolume(volume: Volume): Family[] {
 export function familyOf(name: string): Family | undefined {
   return families().find((f) => f.name === name);
 }
+
+/** Exact entry by position and name (several names can share an EPD). */
+export function findEntry(epd: string, name: string): BookEntry | undefined {
+  return load().entries.find((e) => e.epd === epd && e.name === name);
+}

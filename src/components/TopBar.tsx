@@ -1,7 +1,8 @@
 import type { StringKey } from '../i18n/strings';
 import { useT } from '../i18n/useT';
+import { goBack } from '../store/history';
 import { useStore, type Mode } from '../store/useStore';
-import { IconHome, IconMoon, IconSun, IconUser } from './Icons';
+import { IconBack, IconMoon, IconSun, IconUser } from './Icons';
 
 const MODE_KEY: Record<Mode, StringKey> = {
   bot: 'mode.bot',
@@ -30,7 +31,9 @@ export function TopBar() {
             ? t('home.games')
             : view === 'profile'
               ? t('profile.title')
-              : null;
+              : view === 'sources'
+                ? t('sources.title')
+                : null;
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
@@ -39,10 +42,11 @@ export function TopBar() {
           <button
             type="button"
             className="btn-icon"
-            aria-label={t('nav.home')}
-            onClick={() => setView('home')}
+            aria-label={t('nav.back')}
+            title={t('nav.back')}
+            onClick={goBack}
           >
-            <IconHome />
+            <IconBack />
           </button>
         )}
         <button
@@ -50,6 +54,7 @@ export function TopBar() {
           className="flex items-center gap-2"
           onClick={() => setView('home')}
           aria-label={t('nav.home')}
+          title={t('nav.home')}
         >
           <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="size-6 rounded" />
           <span className="text-base font-bold tracking-tight">{t('appName')}</span>

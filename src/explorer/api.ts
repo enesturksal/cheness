@@ -1,4 +1,11 @@
-import type { ExplorerMove, ExplorerQuery, ExplorerResponse, OpeningName } from './types';
+import type {
+  ExplorerGame,
+  ExplorerMove,
+  ExplorerPlayer,
+  ExplorerQuery,
+  ExplorerResponse,
+  OpeningName,
+} from './types';
 
 /** Verified against https://lichess.org/api#tag/Opening-Explorer (Sep 2026). */
 export const EXPLORER_HOST = 'https://explorer.lichess.org';
@@ -13,18 +20,20 @@ export class ExplorerError extends Error {
   }
 }
 
-/** Stable cache key for a query. */
+/** Stable cache key for a query (the prefix changes whenever the response shape changes). */
 export function queryKey(q: ExplorerQuery): string {
-  if (q.db === 'masters') return `masters|${q.epd}`;
-  return `lichess|${q.epd}|${[...q.ratings].sort((a, b) => a - b).join(',')}|${[...q.speeds].sort().join(',')}`;
+  if (q.db === 'masters') return `2|masters|${q.epd}`;
+  return `2|lichess|${q.epd}|${[...q.ratings].sort((a, b) => a - b).join(',')}|${[...q.speeds].sort().join(',')}`;
 }
+
+/** Reference games per query: the API caps lichess at 4 and masters at 15. */
+export const TOP_GAMES = { lichess: 4, masters: 8 } as const;
 
 export function buildUrl(q: ExplorerQuery): string {
   const p = new URLSearchParams();
   p.set('fen', q.epd);
   p.set('moves', String(q.moves ?? 12));
-  // We only need aggregated move stats; game lists would just inflate the payload.
-  p.set('topGames', '0');
+  p.set('topGames', String(TOP_GAMES[q.db]));
   if (q.db === 'lichess') {
     p.set('variant', 'standard');
     p.set('recentGames', '0');
@@ -61,12 +70,33 @@ export function normalize(raw: unknown): ExplorerResponse {
       averageRating: m.averageRating == null ? null : asInt(m.averageRating),
       opening: asOpening(m.opening),
     }));
+  const gamesRaw = Array.isArray(r.topGames) ? (r.topGames as Record<string, unknown>[]) : [];
+  const player = (v: unknown): ExplorerPlayer => {
+    const o = (v ?? {}) as { name?: unknown; rating?: unknown };
+    return {
+      name: typeof o.name === 'string' ? o.name : '?',
+      rating: o.rating == null ? null : asInt(o.rating),
+    };
+  };
+  const topGames: ExplorerGame[] = gamesRaw
+    .filter((g) => typeof g.id === 'string')
+    .map((g) => ({
+      id: g.id as string,
+      winner: g.winner === 'white' || g.winner === 'black' ? g.winner : null,
+      white: player(g.white),
+      black: player(g.black),
+      year: g.year == null ? null : asInt(g.year),
+      month: typeof g.month === 'string' ? g.month : null,
+      speed: typeof g.speed === 'string' ? g.speed : undefined,
+      uci: typeof g.uci === 'string' ? g.uci : undefined,
+    }));
   return {
     white: asInt(r.white),
     draws: asInt(r.draws),
     black: asInt(r.black),
     moves,
     opening: asOpening(r.opening),
+    topGames,
   };
 }
 

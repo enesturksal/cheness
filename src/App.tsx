@@ -11,6 +11,8 @@ import { MyGamesPage } from './pages/MyGamesPage';
 import { OpeningsPage } from './pages/OpeningsPage';
 import { PlayPage } from './pages/PlayPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { SourcesPage } from './pages/SourcesPage';
+import { startHistorySync } from './store/history';
 import { useStore } from './store/useStore';
 
 export default function App() {
@@ -26,6 +28,7 @@ export default function App() {
       ?.setAttribute('content', theme === 'dark' ? '#161512' : '#f3efe6');
   }, [theme, lang]);
 
+  useEffect(() => startHistorySync(), []);
   useEffect(() => startExplorerController(), []);
   useEffect(() => startAnalysisController(), []);
   useEffect(() => startSuggestionController(), []);
@@ -54,6 +57,7 @@ export default function App() {
         {view === 'openings' && <OpeningsPage />}
         {view === 'games' && <MyGamesPage />}
         {view === 'profile' && <ProfilePage />}
+        {view === 'sources' && <SourcesPage />}
       </main>
     </div>
   );

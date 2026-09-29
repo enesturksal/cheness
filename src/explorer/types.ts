@@ -34,12 +34,32 @@ export interface ExplorerMove {
   opening: OpeningName | null;
 }
 
+export interface ExplorerPlayer {
+  name: string;
+  rating: number | null;
+}
+
+/** A reference game from the explorer (masters: OTB game; lichess: online game id). */
+export interface ExplorerGame {
+  id: string;
+  winner: 'white' | 'black' | null;
+  white: ExplorerPlayer;
+  black: ExplorerPlayer;
+  year: number | null;
+  month: string | null;
+  /** Lichess pool only. */
+  speed?: string;
+  /** The move played from the queried position in this game. */
+  uci?: string;
+}
+
 export interface ExplorerResponse {
   white: number;
   draws: number;
   black: number;
   moves: ExplorerMove[];
   opening: OpeningName | null;
+  topGames: ExplorerGame[];
 }
 
 export interface ExplorerQuery {

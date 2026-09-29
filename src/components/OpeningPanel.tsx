@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { formatScore, negateScore } from '../engine/analysis';
+import { formatScore, negateScore, type MoveAnnotation } from '../engine/analysis';
 import { formatCount, movePercent, outcomePercents, total } from '../explorer/api';
 import {
   bookContinuations,
@@ -10,10 +10,12 @@ import {
 } from '../explorer/book';
 import { startLogin } from '../explorer/lichessAuth';
 import { explorerQueryFor } from '../explorer/query';
-import type { ExplorerMove, OpeningName } from '../explorer/types';
+import type { ExplorerGame, ExplorerMove, OpeningName } from '../explorer/types';
 import { currentFen, epdAfter, turnOf } from '../game/game';
+import { openReferenceGame, resultOf } from '../games/openReference';
 import { useT } from '../i18n/useT';
 import { useStore } from '../store/useStore';
+import { KindBadge } from './KindBadge';
 import { useLongPress } from './useLongPress';
 
 const DEFAULT_ROWS = 5;
@@ -55,33 +57,97 @@ interface RowProps {
   uci: string;
   san: string;
   selected: boolean;
+  /** This move was played in the game being viewed. */
+  played?: MoveAnnotation | null | false;
   onTap: (uci: string) => void;
   onLongPress: (uci: string) => void;
   children: React.ReactNode;
 }
 
-function Row({ uci, san, selected, onTap, onLongPress, children }: RowProps) {
+function Row({ uci, san, selected, played, onTap, onLongPress, children }: RowProps) {
+  const t = useT();
   const handlers = useLongPress(
     () => onLongPress(uci),
     () => onTap(uci),
   );
+  const isPlayed = played !== undefined && played !== false;
   return (
     <button
       type="button"
       {...handlers}
       className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors ${
-        selected ? 'bg-bg3 ring-1 ring-accent' : 'hover:bg-bg3'
+        selected ? 'bg-bg3 ring-1 ring-accent' : isPlayed ? 'row-played' : 'hover:bg-bg3'
       }`}
     >
-      <span className="w-12 shrink-0 font-semibold">{san}</span>
+      <span className="w-12 shrink-0 font-semibold">
+        {san}
+        {isPlayed && (
+          <span className="mt-0.5 flex items-center gap-1">
+            <span className="chip chip-played">{t('panel.played')}</span>
+            {played && <KindBadge kind={played.kind} />}
+          </span>
+        )}
+      </span>
       {children}
     </button>
+  );
+}
+
+function ReferenceGames({ games, db }: { games: ExplorerGame[]; db: 'lichess' | 'masters' }) {
+  const t = useT();
+  const token = useStore((s) => s.lichessToken);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  if (games.length === 0) return null;
+  const open = async (g: ExplorerGame) => {
+    setBusy(g.id);
+    setFailed(null);
+    try {
+      await openReferenceGame(g, db, token);
+    } catch {
+      setFailed(g.id);
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <div className="space-y-0.5">
+      <h3 className="px-2 text-xs font-semibold tracking-wide text-muted uppercase">
+        {db === 'masters' ? t('panel.masterGames') : t('panel.games')}
+      </h3>
+      {games.slice(0, 6).map((g) => (
+        <div key={g.id} className="flex items-center gap-2 px-2 py-1 text-xs">
+          <div className="min-w-0 flex-1">
+            <div className="truncate">
+              <span className={g.winner === 'white' ? 'font-semibold' : ''}>{g.white.name}</span>
+              {g.white.rating ? ` (${g.white.rating})` : ''} –{' '}
+              <span className={g.winner === 'black' ? 'font-semibold' : ''}>{g.black.name}</span>
+              {g.black.rating ? ` (${g.black.rating})` : ''}
+            </div>
+            <div className="text-muted">
+              {g.year ?? ''}
+              {g.speed ? ` · ${g.speed}` : ''} · {resultOf(g)}
+              {failed === g.id ? ` · ${t('panel.gameFailed')}` : ''}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn px-2 py-1 text-xs"
+            disabled={busy !== null}
+            onClick={() => void open(g)}
+          >
+            {busy === g.id ? '…' : t('panel.openGame')}
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }
 
 export function OpeningPanel() {
   const t = useT();
   const game = useStore((s) => s.game);
+  const annotations = useStore((s) => s.annotations);
   const explorer = useStore((s) => s.explorer);
   const suggestions = useStore((s) => s.suggestions);
   const tutorEnabled = useStore((s) => s.tutorEnabled);
@@ -90,6 +156,7 @@ export function OpeningPanel() {
   const setPreview = useStore((s) => s.setPreview);
   const playUci = useStore((s) => s.playUci);
   const setSettings = useStore((s) => s.setSettings);
+  const setView = useStore((s) => s.setView);
   const mode = useStore((s) => s.mode);
   const takeover = useStore((s) => s.takeover);
   const playerColor = useStore((s) => s.playerColor);
@@ -103,6 +170,14 @@ export function OpeningPanel() {
   const current = opening.opening;
   const lineUci = useMemo(() => game.moves.slice(0, game.ply).map((m) => m.uci), [game]);
   const book = useMemo(() => bookContinuations(fen, lineUci), [fen, lineUci]);
+
+  // When reviewing (cursor not at the tip), the next move of the game is "what you played".
+  const playedIdx = game.ply < game.moves.length ? game.ply : -1;
+  const playedUci = playedIdx >= 0 ? game.moves[playedIdx].uci : null;
+  const playedSan = playedIdx >= 0 ? game.moves[playedIdx].san : null;
+  const playedAnn =
+    playedIdx >= 0 && annotations[playedIdx]?.uci === playedUci ? annotations[playedIdx] : null;
+  const playedFlag = (uci: string) => (playedUci === uci ? playedAnn : false);
 
   const live = explorer.key === queryKey ? explorer : null;
   const status = live?.status ?? (tutorEnabled ? 'loading' : 'idle');
@@ -132,7 +207,12 @@ export function OpeningPanel() {
   }
 
   const apiMoves = data?.moves ?? [];
-  const shownApi = showAll ? apiMoves : apiMoves.slice(0, DEFAULT_ROWS);
+  const shownApi = showAll ? [...apiMoves] : apiMoves.slice(0, DEFAULT_ROWS);
+  if (playedUci && !shownApi.some((m) => m.uci === playedUci)) {
+    const extra = apiMoves.find((m) => m.uci === playedUci);
+    if (extra) shownApi.push(extra);
+  }
+  const playedMissing = !!(data && playedUci && !apiMoves.some((m) => m.uci === playedUci));
   const apiUcis = new Set(apiMoves.map((m) => m.uci));
   const extraBook = book.filter((b) => !apiUcis.has(b.uci) && b.opening);
   const bookRows = data && apiMoves.length > 0 ? extraBook : book;
@@ -169,11 +249,22 @@ export function OpeningPanel() {
             {t('explorer.db.masters')}
           </button>
         </div>
-        {data && (
-          <span className="text-xs text-muted">
-            {formatCount(total(data))} {t('explorer.games')}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {data && (
+            <span className="text-xs text-muted">
+              {formatCount(total(data))} {t('explorer.games')}
+            </span>
+          )}
+          <button
+            type="button"
+            className="btn-icon px-2 py-1 text-xs"
+            title={t('sources.title')}
+            aria-label={t('sources.title')}
+            onClick={() => setView('sources')}
+          >
+            i
+          </button>
+        </div>
       </div>
 
       {status === 'loading' && <p className="text-xs text-muted">{t('explorer.loading')}</p>}
@@ -189,11 +280,7 @@ export function OpeningPanel() {
             <button type="button" className="btn btn-primary" onClick={() => void startLogin()}>
               {t('lichess.login')}
             </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => useStore.getState().setView('profile')}
-            >
+            <button type="button" className="btn" onClick={() => setView('profile')}>
               {t('lichess.tokenLabel')}
             </button>
           </div>
@@ -217,6 +304,7 @@ export function OpeningPanel() {
                 uci={m.uci}
                 san={m.san}
                 selected={previewUci === m.uci}
+                played={playedFlag(m.uci)}
                 onTap={onTap}
                 onLongPress={onLongPress}
               >
@@ -230,6 +318,14 @@ export function OpeningPanel() {
               </Row>
             );
           })}
+          {playedMissing && playedUci && playedSan && (
+            <div className="row-played flex items-center gap-2 rounded-lg px-2 py-2 text-xs">
+              <span className="w-12 shrink-0 font-semibold">{playedSan}</span>
+              <span className="chip chip-played">{t('panel.played')}</span>
+              {playedAnn && <KindBadge kind={playedAnn.kind} />}
+              <span className="text-muted">{t('panel.playedNotListed')}</span>
+            </div>
+          )}
           {apiMoves.length > DEFAULT_ROWS && (
             <button
               type="button"
@@ -241,6 +337,8 @@ export function OpeningPanel() {
           )}
         </div>
       )}
+
+      {data && data.topGames.length > 0 && <ReferenceGames games={data.topGames} db={explorerDb} />}
 
       {showSuggestions && (
         <div className="space-y-0.5">
@@ -261,6 +359,7 @@ export function OpeningPanel() {
                 uci={l.uci}
                 san={l.san}
                 selected={previewUci === l.uci}
+                played={playedFlag(l.uci)}
                 onTap={onTap}
                 onLongPress={onLongPress}
               >
@@ -292,6 +391,7 @@ export function OpeningPanel() {
                 uci={b.uci}
                 san={b.san}
                 selected={previewUci === b.uci}
+                played={playedFlag(b.uci)}
                 onTap={onTap}
                 onLongPress={onLongPress}
               >

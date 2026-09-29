@@ -65,6 +65,32 @@ Paneldeki sekmeler:
 - **Ayarlar**: mod, taraf, zorluk, tutor/ok/ipucu seçenekleri, analiz derinliği, rating aralığı
   ve tempo filtreleri, tema, dil.
 
+## Oyunlar kaybolmaz
+
+Hamlesi olan her oyun cihazda saklanır. Ana ekranda "Oyuna devam et" kartı süren oyunu,
+"Bu cihazdaki son oyunlar" listesi öncekileri gösterir; "Devam" ile kaldığın yerden açılır.
+Not: telefonda tarayıcı ile ana ekrana eklenmiş uygulama ayrı depolama kullanır; birinde
+yaptığın giriş diğerinde görünmez.
+
+## Geri gitme
+
+Üst çubuktaki ok ve telefonun geri tuşu bir önceki ekrana döner (kütüphanede varyanttan
+aileye, aileden listeye). Logo ana sayfaya götürür.
+
+## Oyun incelemesi
+
+- Tahtanın üstünde ve altında her tarafın aldığı taşlar ve puan farkı (+2 gibi) görünür.
+- Tahtanın altındaki not satırında hem senin son hamlen hem rakibin son hamlesi notlanır.
+- Geri al (◀) tek hamle geri alır; böylece bot cevap verdikten sonra kendi hamlenin notuna
+  bakabilirsin. İleri (▶) ile devam edersin.
+- Oyunun içinde geriye gidince açılış panelinde o pozisyonda **oynadığın hamle** turuncu
+  "oynanan" etiketiyle, literatürün oynadıklarının yanında görünür; tahtada turuncu okla çizilir.
+- Açılış panelindeki "Usta oyunları / Örnek oyunlar" bölümü o pozisyonun oynandığı gerçek
+  oyunları listeler (oyuncular, rating, yıl, sonuç). "Aç" ile oyunun tamamı uygulamada,
+  baktığın pozisyona konumlanmış olarak açılır.
+- Panelin sağ üstündeki "i" düğmesi ve ana sayfadaki "Veri kaynakları" bağlantısı her verinin
+  nereden geldiğini açıklar.
+
 ## Küçük ipuçları
 
 - Zorluk oyun ortasında değiştirilebilir; bir sonraki hamleden itibaren etkili olur.

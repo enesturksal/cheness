@@ -212,6 +212,32 @@ body {
   --kind: #e03131;
 }
 
+/* Captured pieces next to the player names (chess.com style) */
+.cg-wrap.material piece.material-piece {
+  position: relative;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-left: -4px;
+  pointer-events: none;
+  will-change: auto;
+}
+.cg-wrap.material piece.material-piece:first-child {
+  margin-left: 0;
+}
+
+/* The move actually played from the viewed position (game review) */
+.row-played {
+  background: color-mix(in srgb, #e8590c 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #e8590c 55%, transparent);
+}
+.chip-played {
+  border-color: #e8590c;
+  color: #e8590c;
+  padding-block: 0;
+  font-size: 10px;
+}
+
 /* Horizontal eval bar (White's share) */
 .evalbar {
   position: relative;
